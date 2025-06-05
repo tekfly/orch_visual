@@ -37,10 +37,9 @@ function Download-Files {
         @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:downloadFolder }
     )
 
-    # Show basic download progress (console output for now)
     foreach ($file in $files) {
         $dest = Join-Path $file.Folder $file.FileName
-        Write-Host "Downloading $($file.FileName)..."
+        $statusText.Text = "Downloading $($file.FileName)..."
         try {
             Invoke-WebRequest -Uri $file.Url -OutFile $dest -UseBasicParsing -ErrorAction Stop
         } catch {
@@ -51,7 +50,7 @@ function Download-Files {
 
     foreach ($xaml in $xamlFiles) {
         $dest = Join-Path $xamlFolder $xaml.FileName
-        Write-Host "Downloading $($xaml.FileName)..."
+        $statusText.Text = "Downloading $($xaml.FileName)..."
         try {
             Invoke-WebRequest -Uri $xaml.Url -OutFile $dest -UseBasicParsing -ErrorAction Stop
         } catch {
@@ -59,12 +58,14 @@ function Download-Files {
             exit
         }
     }
+
+    $progressBar.Value = 100
+    $statusText.Text = "Downloads complete."
 }
 
-# ✅ Step 1: Download files BEFORE loading the UI
-Download-Files
+# -------------------
 
-# ✅ Step 2: Load MainWindow.xaml from downloaded path
+# Load MainWindow.xaml from downloaded folder
 $xamlPath = Join-Path $global:downloadFolder "xaml_files\MainWindow.xaml"
 if (-not (Test-Path $xamlPath)) {
     [System.Windows.MessageBox]::Show("MainWindow.xaml not found after download.", "Error", "OK", "Error")
@@ -75,7 +76,7 @@ if (-not (Test-Path $xamlPath)) {
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
-# ✅ Step 3: Get UI controls
+# Find controls
 $statusText   = $window.FindName("StatusText")
 $progressBar  = $window.FindName("ProgressBar")
 $btnFiles     = $window.FindName("BtnFiles")
@@ -84,12 +85,30 @@ $btnInstall   = $window.FindName("BtnInstall")
 $btnConnect   = $window.FindName("BtnConnect")
 $btnUpdate    = $window.FindName("BtnUpdate")
 
-# ✅ Step 4: Button Handlers
+# Disable buttons initially
+$btnDownload.IsEnabled = $false
+$btnInstall.IsEnabled = $false
+$btnConnect.IsEnabled = $false
+$btnUpdate.IsEnabled = $false
+
+# Call Download-Files now that UI controls are available
+Download-Files
+
+# Enable buttons after download completes
+$btnDownload.IsEnabled = $true
+$btnInstall.IsEnabled = $true
+$btnConnect.IsEnabled = $true
+$btnUpdate.IsEnabled = $true
+
+# Button Click Handlers
 $btnFiles.Add_Click({
     $statusText.Text = "Updating files..."
     $progressBar.Value = 0
     Download-Files
-    $progressBar.Value = 100
+    $btnDownload.IsEnabled = $true
+    $btnInstall.IsEnabled = $true
+    $btnConnect.IsEnabled = $true
+    $btnUpdate.IsEnabled = $true
     $statusText.Text = "Update complete."
 })
 
@@ -114,5 +133,5 @@ $btnInstall.Add_Click({
 $btnConnect.Add_Click({ [System.Windows.MessageBox]::Show("Connect clicked.") })
 $btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
 
-# ✅ Step 5: Show the window
+# Show window
 $window.ShowDialog() | Out-Null
