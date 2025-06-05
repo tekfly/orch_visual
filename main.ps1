@@ -7,8 +7,8 @@ $global:scriptFolder = Join-Path $global:downloadFolder "script"
 # URLs
 $productVersionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/product_versions.json"
 $installComponentsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/InstallComponents.json"
-$downloadWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/DownloadWindow.ps1"
-$installWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/InstallWindow.ps1"
+$downloadWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/DownloadWindow.ps1"
+$installWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/InstallWindow.ps1"
 
 # XAML URLs
 $xamlFiles = @(
