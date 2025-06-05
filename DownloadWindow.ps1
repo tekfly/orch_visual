@@ -31,32 +31,32 @@ $actionsByProduct = @{
     "Others" = @("download")
 }
 
-[xml]$xaml = @"
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        Title="Download UiPath Components" Height="400" Width="500" WindowStartupLocation="CenterScreen">
-    <Grid Margin="10">
-        <StackPanel>
-            <TextBlock Text="Select Product:" Margin="0,0,0,5"/>
-            <ComboBox Name="ProductBox" Height="25"/>
+# [xml]$xaml = @"
+# <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+#         Title="Download UiPath Components" Height="400" Width="500" WindowStartupLocation="CenterScreen">
+#     <Grid Margin="10">
+#         <StackPanel>
+#             <TextBlock Text="Select Product:" Margin="0,0,0,5"/>
+#             <ComboBox Name="ProductBox" Height="25"/>
 
-            <TextBlock Text="Select Action:" Margin="0,10,0,5"/>
-            <ComboBox Name="ActionBox" Height="25" IsEnabled="False"/>
+#             <TextBlock Text="Select Action:" Margin="0,10,0,5"/>
+#             <ComboBox Name="ActionBox" Height="25" IsEnabled="False"/>
 
-            <TextBlock Text="Select Version:" Margin="0,10,0,5"/>
-            <ComboBox Name="VersionBox" Height="25" IsEnabled="False"/>
+#             <TextBlock Text="Select Version:" Margin="0,10,0,5"/>
+#             <ComboBox Name="VersionBox" Height="25" IsEnabled="False"/>
 
-            <ListBox Name="OthersListBox" Height="100" SelectionMode="Extended" Visibility="Collapsed"/>
+#             <ListBox Name="OthersListBox" Height="100" SelectionMode="Extended" Visibility="Collapsed"/>
 
-            <ProgressBar Name="ProgressBar" Height="20" Margin="0,20,0,0" Minimum="0" Maximum="100" Visibility="Hidden"/>
+#             <ProgressBar Name="ProgressBar" Height="20" Margin="0,20,0,0" Minimum="0" Maximum="100" Visibility="Hidden"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                <Button Name="DownloadBtn" Content="Download" Width="100" Height="30" IsEnabled="False" Margin="0,0,10,0"/>
-                <Button Name="CancelBtn" Content="Cancel" Width="100" Height="30" IsEnabled="False"/>
-            </StackPanel>
-        </StackPanel>
-    </Grid>
-</Window>
-"@
+#             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+#                 <Button Name="DownloadBtn" Content="Download" Width="100" Height="30" IsEnabled="False" Margin="0,0,10,0"/>
+#                 <Button Name="CancelBtn" Content="Cancel" Width="100" Height="30" IsEnabled="False"/>
+#             </StackPanel>
+#         </StackPanel>
+#     </Grid>
+# </Window>
+# "@
 
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
