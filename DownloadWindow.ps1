@@ -44,8 +44,8 @@ $window = [Windows.Markup.XamlReader]::Load($reader)
 
 
 
-$reader = (New-Object System.Xml.XmlNodeReader $xaml)
-$window = [Windows.Markup.XamlReader]::Load($reader)
+# $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+# $window = [Windows.Markup.XamlReader]::Load($reader)
 
 $productBox  = $window.FindName("ProductBox")
 $actionBox   = $window.FindName("ActionBox")
