@@ -7,10 +7,10 @@
             <TextBlock Name="StatusText" Text="Ready" Margin="0,0,0,20" FontWeight="Bold" FontSize="14" TextAlignment="Center"/>
             <WrapPanel HorizontalAlignment="Center" >
                 <Button Name="BtnFiles" Width="80" Margin="5" Content="UpdateFiles" IsEnabled="True"/>
-                <Button Name="BtnDownload" Width="80" Margin="5" Content="Download" IsEnabled="False"/>
-                <Button Name="BtnInstall" Width="80" Margin="5" Content="Install" IsEnabled="False"/>
-                <Button Name="BtnConnect" Width="80" Margin="5" Content="Connect" IsEnabled="False"/>
-                <Button Name="BtnUpdate" Width="80" Margin="5" Content="Update" IsEnabled="False"/>
+                <Button Name="BtnDownload" Width="80" Margin="5" Content="Download" IsEnabled="True"/>
+                <Button Name="BtnInstall" Width="80" Margin="5" Content="Install" IsEnabled="True"/>
+                <Button Name="BtnConnect" Width="80" Margin="5" Content="Connect" IsEnabled="True"/>
+                <Button Name="BtnUpdate" Width="80" Margin="5" Content="Update" IsEnabled="True"/>
             </WrapPanel>
         </StackPanel>
     </Grid>
