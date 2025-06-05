@@ -1,5 +1,5 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-Title="Install UiPath Components" WindowStartupLocation="CenterScreen" Margin="214,95,366,153">
+Title="Install UiPath Components1" WindowStartupLocation="CenterScreen" Margin="214,95,366,153">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
