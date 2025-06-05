@@ -21,6 +21,7 @@ $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
 $FilesListBox = $mainWindow.FindName("FilesListBox")
 $InstallBtn = $mainWindow.FindName("InstallBtn")
+$CancelBtn = $mainWindow.FindName("CancelBtn")
 $ChkMsi = $mainWindow.FindName("ChkMsi")
 $ChkExe = $mainWindow.FindName("ChkExe")
 $ChkPs1 = $mainWindow.FindName("ChkPs1")
@@ -123,6 +124,10 @@ $InstallBtn.Add_Click({
     $filePath = Join-Path $PSScriptRoot $selectedFile
     $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
     Execute-Installer -FileName $filePath -Arguments $args
+})
+
+$CancelBtn.Add_Click({
+    $mainWindow.Close()
 })
 
 Update-FileList
