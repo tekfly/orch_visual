@@ -2,6 +2,7 @@ Add-Type -AssemblyName PresentationFramework
 
 # Global download folder
 $global:downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
+$global:scriptFolder = Join-Path $global:downloadFolder "script"
 
 # URLs
 $productVersionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/product_versions.json"
@@ -33,8 +34,8 @@ function Download-Files {
     $files = @(
         @{ Url = $productVersionsUrl; FileName = "product_versions.json"; Folder = $jsonFolder },
         @{ Url = $installComponentsUrl; FileName = "InstallComponents.json"; Folder = $jsonFolder },
-        @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1"; Folder = $global:downloadFolder },
-        @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:downloadFolder }
+        @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1"; Folder = $global:scriptFolder },
+        @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:scriptFolder }
     )
 
     foreach ($file in $files) {
@@ -104,7 +105,7 @@ $btnFiles.Add_Click({
 })
 
 $btnDownload.Add_Click({
-    $script = Join-Path $global:downloadFolder "DownloadWindow.ps1"
+    $script = Join-Path $global:scriptFolder "DownloadWindow.ps1"
     if (Test-Path $script) {
         & $script
     } else {
@@ -113,7 +114,7 @@ $btnDownload.Add_Click({
 })
 
 $btnInstall.Add_Click({
-    $script = Join-Path $global:downloadFolder "InstallWindow.ps1"
+    $script = Join-Path $global:scriptFolder "InstallWindow.ps1"
     if (Test-Path $script) {
         & $script
     } else {
