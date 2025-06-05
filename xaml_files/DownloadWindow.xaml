@@ -1,44 +1,45 @@
-<Window
+<Window 
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    Title="Download Window"
-    Width="600" Height="450"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Download Window" 
+    Height="500" Width="600" 
     WindowStartupLocation="CenterScreen">
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Product selection -->
+        <!-- Product -->
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="Product:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="Product:" VerticalAlignment="Center" Width="60"/>
             <ComboBox x:Name="ProductBox" Width="200"/>
         </StackPanel>
 
-        <!-- Action selection -->
+        <!-- Action -->
         <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,10">
-            <TextBlock Text="Action:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="Action:" VerticalAlignment="Center" Width="60"/>
             <ComboBox x:Name="ActionBox" Width="200" IsEnabled="False"/>
         </StackPanel>
 
-        <!-- Version selection -->
+        <!-- Version -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,0,0,10">
-            <TextBlock Text="Version:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="Version:" VerticalAlignment="Center" Width="60"/>
             <ComboBox x:Name="VersionBox" Width="200" IsEnabled="False"/>
         </StackPanel>
 
-        <!-- Others ListBox -->
+        <!-- Others List -->
         <ListBox x:Name="OthersListBox" Grid.Row="3" Height="150" Visibility="Collapsed" SelectionMode="Extended"/>
 
-        <!-- Progress bar and buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" >
-            <ProgressBar x:Name="ProgressBar" Width="200" Height="20" Margin="0,0,10,0"/>
-            <Button x:Name="DownloadBtn" Content="Download" Width="100" IsEnabled="False" Margin="0,0,10,0"/>
-            <Button x:Name="CancelBtn" Content="Cancel" Width="100" IsEnabled="False"/>
+        <!-- Buttons and Progress -->
+        <StackPanel Orientation="Horizontal" Grid.Row="4" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <ProgressBar x:Name="ProgressBar" Width="150" Height="20" Margin="0,0,10,0"/>
+            <Button x:Name="DownloadBtn" Content="Download" Width="100" Margin="0,0,10,0" IsEnabled="False"/>
+            <Button x:Name="CancelBtn" Content="Cancel" Width="80" IsEnabled="False"/>
         </StackPanel>
     </Grid>
 </Window>
