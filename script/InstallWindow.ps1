@@ -1,8 +1,10 @@
 # Define paths to XAML files
-$XamlPath = Join-Path -Path $PSScriptRoot -ChildPath "xaml_files"
+$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\"
+$XamlPath = Join-Path -Path $downloadFolder -ChildPath "xaml_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
+$folder_downloads = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\downloads"
 
 # Load XAML content
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
@@ -21,6 +23,7 @@ $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
 $FilesListBox = $mainWindow.FindName("FilesListBox")
 $InstallBtn = $mainWindow.FindName("InstallBtn")
+$RefreshBtn = $mainWindow.FindName("RefreshBtn")
 $CancelBtn = $mainWindow.FindName("CancelBtn")
 $ChkMsi = $mainWindow.FindName("ChkMsi")
 $ChkExe = $mainWindow.FindName("ChkExe")
@@ -28,7 +31,7 @@ $ChkPs1 = $mainWindow.FindName("ChkPs1")
 
 function Update-FileList {
     $FilesListBox.Items.Clear()
-    $files = Get-ChildItem -Path $PSScriptRoot -File | Where-Object {
+    $files = Get-ChildItem -Path $folder_downloads -File | Where-Object {
         ($ChkMsi.IsChecked -and $_.Extension -eq ".msi") -or
         ($ChkExe.IsChecked -and $_.Extension -eq ".exe") -or
         ($ChkPs1.IsChecked -and $_.Extension -eq ".ps1")
@@ -124,6 +127,10 @@ $InstallBtn.Add_Click({
     $filePath = Join-Path $PSScriptRoot $selectedFile
     $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
     Execute-Installer -FileName $filePath -Arguments $args
+})
+
+$RefreshBtn.Add_Click({
+    Update-FileList
 })
 
 $CancelBtn.Add_Click({

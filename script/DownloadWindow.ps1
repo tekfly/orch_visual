@@ -1,8 +1,9 @@
 Add-Type -AssemblyName PresentationFramework
 
-$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\downloads"
+$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\"
 $versionFile = Join-Path $downloadFolder "json_files\product_versions.json"
 $jsonUrl = "https://raw.githubusercontent.com/tekfly/orch_gui/refs/heads/main/product_versions.json"
+$folder_downloads = Join-Path $downloadFolder "\downloads"
 
 if (-not (Test-Path $downloadFolder)) {
     New-Item -Path $downloadFolder -ItemType Directory -Force | Out-Null
@@ -188,7 +189,7 @@ $downloadBtn.Add_Click({
                 $savePath = Join-Path $downloadFolder "$productNameForFile-$version.msi"
                 Download-FileInner -url $url -savePath $savePath
             }
-        } -ArgumentList $productBox.SelectedItem, $versionBox.SelectedItem, @($othersListBox.SelectedItems), $othersListBox.Tag, $jsonData, $downloadFolder
+        } -ArgumentList $productBox.SelectedItem, $versionBox.SelectedItem, @($othersListBox.SelectedItems), $othersListBox.Tag, $jsonData, $folder_downloads
 
         # Wait for job to finish
         $job | Wait-Job
