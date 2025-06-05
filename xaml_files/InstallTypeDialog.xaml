@@ -1,0 +1,10 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        Title="Choose Install Type" Height="150" Width="300" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <StackPanel Margin="10">
+        <TextBlock Text="Install as Studio or Robot?" FontWeight="Bold" Margin="0,0,0,10"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" >
+            <Button Name="StudioBtn" Content="Studio" Width="100" Margin="5"/>
+            <Button Name="RobotBtn" Content="Robot" Width="100" Margin="5"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
