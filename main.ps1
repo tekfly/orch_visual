@@ -19,7 +19,7 @@ $xamlFiles = @(
 )
 
 function Download-Files {
-    # Create all required folders
+    # Create folders
     $jsonFolder = Join-Path $global:downloadFolder "json_files"
     $xamlFolder = Join-Path $global:downloadFolder "xaml_files"
 
@@ -29,7 +29,7 @@ function Download-Files {
         }
     }
 
-    # Files to download
+    # Download static files
     $files = @(
         @{ Url = $productVersionsUrl; FileName = "product_versions.json"; Folder = $jsonFolder },
         @{ Url = $installComponentsUrl; FileName = "InstallComponents.json"; Folder = $jsonFolder },
@@ -39,7 +39,6 @@ function Download-Files {
 
     foreach ($file in $files) {
         $dest = Join-Path $file.Folder $file.FileName
-        $statusText.Text = "Downloading $($file.FileName)..."
         try {
             Invoke-WebRequest -Uri $file.Url -OutFile $dest -UseBasicParsing -ErrorAction Stop
         } catch {
@@ -48,9 +47,9 @@ function Download-Files {
         }
     }
 
+    # Download XAMLs
     foreach ($xaml in $xamlFiles) {
         $dest = Join-Path $xamlFolder $xaml.FileName
-        $statusText.Text = "Downloading $($xaml.FileName)..."
         try {
             Invoke-WebRequest -Uri $xaml.Url -OutFile $dest -UseBasicParsing -ErrorAction Stop
         } catch {
@@ -58,25 +57,27 @@ function Download-Files {
             exit
         }
     }
-
-    $progressBar.Value = 100
-    $statusText.Text = "Downloads complete."
 }
 
-# -------------------
+# ---------- DOWNLOAD EVERYTHING FIRST ----------
+Download-Files
 
-# Load MainWindow.xaml from downloaded folder
+# ---------- LOAD AND CLEAN XAML ----------
 $xamlPath = Join-Path $global:downloadFolder "xaml_files\MainWindow.xaml"
 if (-not (Test-Path $xamlPath)) {
     [System.Windows.MessageBox]::Show("MainWindow.xaml not found after download.", "Error", "OK", "Error")
     exit
 }
 
-[xml]$xaml = Get-Content $xamlPath -Raw
+# Remove unsupported markup
+$xamlRaw = Get-Content $xamlPath -Raw
+$xamlClean = $xamlRaw -replace 'mc:Ignorable="[^"]*"', ''
+$xamlClean = $xamlClean -replace 'xmlns:mc="[^"]*"', ''
+[xml]$xaml = $xamlClean
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
-# Find controls
+# ---------- UI ELEMENTS ----------
 $statusText   = $window.FindName("StatusText")
 $progressBar  = $window.FindName("ProgressBar")
 $btnFiles     = $window.FindName("BtnFiles")
@@ -85,30 +86,20 @@ $btnInstall   = $window.FindName("BtnInstall")
 $btnConnect   = $window.FindName("BtnConnect")
 $btnUpdate    = $window.FindName("BtnUpdate")
 
-# Disable buttons initially
-$btnDownload.IsEnabled = $false
-$btnInstall.IsEnabled = $false
-$btnConnect.IsEnabled = $false
-$btnUpdate.IsEnabled = $false
-
-# Call Download-Files now that UI controls are available
-Download-Files
-
-# Enable buttons after download completes
+# Initialize UI
+$statusText.Text = "Ready."
+$progressBar.Value = 100
 $btnDownload.IsEnabled = $true
 $btnInstall.IsEnabled = $true
 $btnConnect.IsEnabled = $true
 $btnUpdate.IsEnabled = $true
 
-# Button Click Handlers
+# ---------- BUTTON EVENTS ----------
 $btnFiles.Add_Click({
     $statusText.Text = "Updating files..."
     $progressBar.Value = 0
     Download-Files
-    $btnDownload.IsEnabled = $true
-    $btnInstall.IsEnabled = $true
-    $btnConnect.IsEnabled = $true
-    $btnUpdate.IsEnabled = $true
+    $progressBar.Value = 100
     $statusText.Text = "Update complete."
 })
 
@@ -133,5 +124,5 @@ $btnInstall.Add_Click({
 $btnConnect.Add_Click({ [System.Windows.MessageBox]::Show("Connect clicked.") })
 $btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
 
-# Show window
+# ---------- SHOW UI ----------
 $window.ShowDialog() | Out-Null
