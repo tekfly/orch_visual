@@ -23,6 +23,8 @@ function Download-Files {
     # Create folders
     $jsonFolder = Join-Path $global:downloadFolder "json_files"
     $xamlFolder = Join-Path $global:downloadFolder "xaml_files"
+    $xamlFolder = Join-Path $global:downloadFolder "script"
+    $xamlFolder = Join-Path $global:downloadFolder "downloads"
 
     foreach ($folder in @($global:downloadFolder, $jsonFolder, $xamlFolder)) {
         if (-not (Test-Path $folder)) {
