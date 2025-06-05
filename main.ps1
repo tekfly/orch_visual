@@ -1,93 +1,81 @@
 Add-Type -AssemblyName PresentationFramework
 
-# Download folder
+# Global download folder
 $global:downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
 
-# Define URLs
+# URLs
 $productVersionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/product_versions.json"
 $installComponentsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/InstallComponents.json"
 $downloadWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/DownloadWindow.ps1"
 $installWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/InstallWindow.ps1"
 
-# Ensure main folder exists
-if (-not (Test-Path $downloadFolder)) {
-    New-Item -Path $downloadFolder -ItemType Directory -Force | Out-Null
-}
+# XAML URLs
+$xamlFiles = @(
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/MainWindow.xaml";        FileName = "MainWindow.xaml" },
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallWindow.xaml";     FileName = "InstallWindow.xaml" },
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/DownloadWindow.xaml";    FileName = "DownloadWindow.xaml" },
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/ComponentOptions.xaml";  FileName = "ComponentOptions.xaml" },
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallTypeDialog.xaml"; FileName = "InstallTypeDialog.xaml" }
+)
 
 function Download-Files {
-    $files = @(
-        @{ Url = $productVersionsUrl; FileName = "product_versions.json" },
-        @{ Url = $installComponentsUrl; FileName = "InstallComponents.json" },
-        @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1" },
-        @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1" }
-    )
+    # Create all required folders
+    $jsonFolder = Join-Path $global:downloadFolder "json_files"
+    $xamlFolder = Join-Path $global:downloadFolder "xaml_files"
 
-    # Create folders
-    $jsonFolder = Join-Path $downloadFolder "json_files"
-    $xamlFolder = Join-Path $downloadFolder "xaml_files"
-    foreach ($folder in @($jsonFolder, $xamlFolder)) {
+    foreach ($folder in @($global:downloadFolder, $jsonFolder, $xamlFolder)) {
         if (-not (Test-Path $folder)) {
             New-Item -Path $folder -ItemType Directory -Force | Out-Null
         }
     }
 
-    # Download JSON and PS1 files
-    for ($i = 0; $i -lt $files.Count; $i++) {
-        $file = $files[$i]
-        $ext = [System.IO.Path]::GetExtension($file.FileName)
-        $savePath = if ($ext -eq ".json") {
-            Join-Path $jsonFolder $file.FileName
-        } else {
-            Join-Path $downloadFolder $file.FileName
-        }
-
-        $statusText.Text = "Downloading $($file.FileName)..."
-        $progressBar.Value = [math]::Round(($i / $files.Count) * 100)
-
-        try {
-            Invoke-WebRequest -Uri $file.Url -OutFile $savePath -UseBasicParsing -ErrorAction Stop
-        } catch {
-            [System.Windows.MessageBox]::Show("Failed to download $($file.FileName):`n$($_.Exception.Message)", "Error", "OK", "Error")
-            return
-        }
-    }
-
-    # Download XAML files
-    $xamlFiles = @(
-        @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallWindow.xaml";     FileName = "InstallWindow.xaml" },
-        @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/DownloadWindow.xaml";    FileName = "DownloadWindow.xaml" },
-        @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/MainWindow.xaml";        FileName = "MainWindow.xaml" },
-        @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/ComponentOptions.xaml";  FileName = "ComponentOptions.xaml" },
-        @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallTypeDialog.xaml"; FileName = "InstallTypeDialog.xaml" }
+    # Files to download
+    $files = @(
+        @{ Url = $productVersionsUrl; FileName = "product_versions.json"; Folder = $jsonFolder },
+        @{ Url = $installComponentsUrl; FileName = "InstallComponents.json"; Folder = $jsonFolder },
+        @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1"; Folder = $global:downloadFolder },
+        @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:downloadFolder }
     )
 
-    foreach ($file in $xamlFiles) {
-        $savePath = Join-Path $xamlFolder $file.FileName
-        $statusText.Text = "Downloading $($file.FileName)..."
+    # Show basic download progress (console output for now)
+    foreach ($file in $files) {
+        $dest = Join-Path $file.Folder $file.FileName
+        Write-Host "Downloading $($file.FileName)..."
         try {
-            Invoke-WebRequest -Uri $file.Url -OutFile $savePath -UseBasicParsing -ErrorAction Stop
+            Invoke-WebRequest -Uri $file.Url -OutFile $dest -UseBasicParsing -ErrorAction Stop
         } catch {
-            [System.Windows.MessageBox]::Show("Failed to download $($file.FileName):`n$($_.Exception.Message)", "Error", "OK", "Error")
-            return
+            [System.Windows.MessageBox]::Show("Failed to download $($file.FileName):`n$($_.Exception.Message)", "Download Error", "OK", "Error")
+            exit
         }
     }
 
-    $progressBar.Value = 100
-    $statusText.Text = "Downloads complete."
-    $btnDownload.IsEnabled = $true
-    $btnInstall.IsEnabled = $true
-    $btnConnect.IsEnabled = $true
-    $btnUpdate.IsEnabled = $true
-    [System.Windows.MessageBox]::Show("Files downloaded to:`n$downloadFolder", "Done", "OK", "Information")
+    foreach ($xaml in $xamlFiles) {
+        $dest = Join-Path $xamlFolder $xaml.FileName
+        Write-Host "Downloading $($xaml.FileName)..."
+        try {
+            Invoke-WebRequest -Uri $xaml.Url -OutFile $dest -UseBasicParsing -ErrorAction Stop
+        } catch {
+            [System.Windows.MessageBox]::Show("Failed to download $($xaml.FileName):`n$($_.Exception.Message)", "Download Error", "OK", "Error")
+            exit
+        }
+    }
 }
 
-# Load the downloaded MainWindow.xaml
-$xamlPath = Join-Path $downloadFolder "xaml_files\MainWindow.xaml"
+# ✅ Step 1: Download files BEFORE loading the UI
+Download-Files
+
+# ✅ Step 2: Load MainWindow.xaml from downloaded path
+$xamlPath = Join-Path $global:downloadFolder "xaml_files\MainWindow.xaml"
+if (-not (Test-Path $xamlPath)) {
+    [System.Windows.MessageBox]::Show("MainWindow.xaml not found after download.", "Error", "OK", "Error")
+    exit
+}
+
 [xml]$xaml = Get-Content $xamlPath -Raw
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
-# Find controls
+# ✅ Step 3: Get UI controls
 $statusText   = $window.FindName("StatusText")
 $progressBar  = $window.FindName("ProgressBar")
 $btnFiles     = $window.FindName("BtnFiles")
@@ -96,29 +84,35 @@ $btnInstall   = $window.FindName("BtnInstall")
 $btnConnect   = $window.FindName("BtnConnect")
 $btnUpdate    = $window.FindName("BtnUpdate")
 
-# Button handlers
+# ✅ Step 4: Button Handlers
 $btnFiles.Add_Click({
     $statusText.Text = "Updating files..."
     $progressBar.Value = 0
     Download-Files
+    $progressBar.Value = 100
+    $statusText.Text = "Update complete."
 })
 
 $btnDownload.Add_Click({
-    & "$global:downloadFolder\DownloadWindow.ps1"
+    $script = Join-Path $global:downloadFolder "DownloadWindow.ps1"
+    if (Test-Path $script) {
+        & $script
+    } else {
+        [System.Windows.MessageBox]::Show("DownloadWindow.ps1 not found.", "Error", "OK", "Error")
+    }
 })
 
 $btnInstall.Add_Click({
-    & "$global:downloadFolder\InstallWindow.ps1"
+    $script = Join-Path $global:downloadFolder "InstallWindow.ps1"
+    if (Test-Path $script) {
+        & $script
+    } else {
+        [System.Windows.MessageBox]::Show("InstallWindow.ps1 not found.", "Error", "OK", "Error")
+    }
 })
 
-$btnConnect.Add_Click({
-    [System.Windows.MessageBox]::Show("Connect clicked.")
-})
+$btnConnect.Add_Click({ [System.Windows.MessageBox]::Show("Connect clicked.") })
+$btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
 
-$btnUpdate.Add_Click({
-    [System.Windows.MessageBox]::Show("Update clicked.")
-})
-
-# Show UI
+# ✅ Step 5: Show the window
 $window.ShowDialog() | Out-Null
-#update2
