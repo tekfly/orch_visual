@@ -1,6 +1,6 @@
 Add-Type -AssemblyName PresentationFramework
 
-$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
+$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\downloads"
 $versionFile = Join-Path $downloadFolder "json_files\product_versions.json"
 $jsonUrl = "https://raw.githubusercontent.com/tekfly/orch_gui/refs/heads/main/product_versions.json"
 
