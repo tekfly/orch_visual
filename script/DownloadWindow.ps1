@@ -68,7 +68,7 @@ $productBox.Add_SelectionChanged({
         $versionBox.Items.Clear()
         $versionBox.IsEnabled = $false
         $downloadBtn.IsEnabled = $false
-        $cancelBtn.IsEnabled = $false
+        $cancelBtn.IsEnabled = $true
 
         $othersListBox.Items.Clear()
         $othersListBox.Visibility = if ($selectedProduct -eq "Others") { 'Visible' } else { 'Collapsed' }
@@ -222,6 +222,9 @@ $downloadBtn.Add_Click({
     }
 })
 
-$cancelBtn.Add_Click({ $cancelBtn.IsEnabled = $false })
+$cancelBtn.Add_Click({ 
+    #$cancelBtn.IsEnabled = $false
+    $window.Close() 
+    })
 
 $window.ShowDialog() | Out-Null
