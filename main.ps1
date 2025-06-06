@@ -9,6 +9,7 @@ $productVersionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs
 $installComponentsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/InstallComponents.json"
 $downloadWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/DownloadWindow.ps1"
 $installWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/InstallWindow.ps1"
+$connectWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/ConnectWindow.ps1"
 
 # XAML URLs
 $xamlFiles = @(
@@ -16,7 +17,8 @@ $xamlFiles = @(
     @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallWindow.xaml";     FileName = "InstallWindow.xaml" },
     @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/DownloadWindow.xaml";    FileName = "DownloadWindow.xaml" },
     @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/ComponentOptions.xaml";  FileName = "ComponentOptions.xaml" },
-    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallTypeDialog.xaml"; FileName = "InstallTypeDialog.xaml" }
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallTypeDialog.xaml"; FileName = "InstallTypeDialog.xaml" },
+    @{ URL = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/Connect.xaml"; FileName ="ConnectWindow.xaml"}
 )
 
 function Download-Files {
@@ -37,7 +39,8 @@ function Download-Files {
         @{ Url = $productVersionsUrl; FileName = "product_versions.json"; Folder = $jsonFolder },
         @{ Url = $installComponentsUrl; FileName = "InstallComponents.json"; Folder = $jsonFolder },
         @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1"; Folder = $global:scriptFolder },
-        @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:scriptFolder }
+        @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:scriptFolder },
+        @{ Url = $connectWindowUrl; FileName = "ConnectWindow.ps1"; Folder = $global:scriptFolder }
     )
 
     foreach ($file in $files) {
@@ -124,7 +127,17 @@ $btnInstall.Add_Click({
     }
 })
 
-$btnConnect.Add_Click({ [System.Windows.MessageBox]::Show("Connect clicked.") })
+$btnConnect.Add_Click({
+    $script = Join-Path $global:scriptFolder "ConnectWindow.ps1"
+    if (Test-Path $script) {
+        & $script
+    } else {
+        [System.Windows.MessageBox]::Show("ConnectWindow.ps1 not found.", "Error", "OK", "Error")
+    }
+    #[System.Windows.MessageBox]::Show("Connect clicked.") 
+    })
+
+
 $btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
 
 # ---------- SHOW UI ----------
