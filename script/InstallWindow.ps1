@@ -4,6 +4,7 @@ $XamlPath = Join-Path $downloadFolder "xaml_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
+$WaitingWindowXamlPath = Join-Path $XamlPath "WaitingWindow.xaml"
 $folder_downloads = Join-Path $downloadFolder "downloads"
 $masterLogPath = Join-Path $downloadFolder "install_log.txt"
 
@@ -20,6 +21,8 @@ $chromeInstallParams = @(
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
 [xml]$installTypeXaml = Get-Content -Raw -Path $InstallTypeXamlPath
 [xml]$componentOptionsTemplate = Get-Content -Raw -Path $ComponentOptionsXamlPath
+[xml]$waitingXaml = Get-Content -Raw -Path $WaitingWindowXamlPath
+
 Add-Type -AssemblyName PresentationFramework
 
 function Load-XamlWindow {
@@ -31,6 +34,8 @@ function Load-XamlWindow {
 # GUI elements
 $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
+$waitingWindow = Load-XamlWindow $waitingXaml
+
 $FilesListBox = $mainWindow.FindName("FilesListBox")
 $InstallBtn = $mainWindow.FindName("InstallBtn")
 $RefreshBtn = $mainWindow.FindName("RefreshBtn")
@@ -121,6 +126,9 @@ $InstallBtn.Add_Click({
         return
     }
 
+    $waitingWindow.Show()
+    Start-Sleep -Milliseconds 200
+
     foreach ($selectedFile in $selectedFiles) {
         $filePath = Join-Path $folder_downloads $selectedFile
         $args = @()
@@ -170,8 +178,10 @@ $InstallBtn.Add_Click({
             [System.Windows.MessageBox]::Show("Installation failed for $selectedFile. Check the log for details.")
         }
     }
-})
 
+    $waitingWindow.Close()
+    [System.Windows.MessageBox]::Show("Installation(s) completed.")
+})
 
 $RefreshBtn.Add_Click({ Update-FileList })
 $CancelBtn.Add_Click({ $mainWindow.Close() })
