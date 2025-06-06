@@ -1,14 +1,18 @@
 Add-Type -AssemblyName PresentationFramework
 
-$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\"
+$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
 $versionFile = Join-Path $downloadFolder "json_files\product_versions.json"
 $jsonUrl = "https://raw.githubusercontent.com/tekfly/orch_gui/refs/heads/main/product_versions.json"
-$folder_downloads = Join-Path $downloadFolder "\downloads"
+$folder_downloads = Join-Path $downloadFolder "downloads"
 
-if (-not (Test-Path $downloadFolder)) {
-    New-Item -Path $downloadFolder -ItemType Directory -Force | Out-Null
+# Create folders if missing
+foreach ($path in @($downloadFolder, (Split-Path $versionFile), $folder_downloads)) {
+    if (-not (Test-Path $path)) {
+        New-Item -Path $path -ItemType Directory -Force | Out-Null
+    }
 }
 
+# Download JSON if missing
 if (-not (Test-Path $versionFile)) {
     try {
         Invoke-WebRequest -Uri $jsonUrl -OutFile $versionFile -UseBasicParsing
@@ -18,6 +22,7 @@ if (-not (Test-Path $versionFile)) {
     }
 }
 
+# Load and parse JSON
 try {
     $jsonData = Get-Content $versionFile -Raw | ConvertFrom-Json
 } catch {
@@ -32,10 +37,10 @@ $actionsByProduct = @{
     "Others" = @("download")
 }
 
-# Load DownloadWindow.xaml from xaml_files folder
-$xamlPath = Join-Path $global:downloadFolder "xaml_files\DownloadWindow.xaml"
+# Load XAML UI
+$xamlPath = Join-Path $downloadFolder "xaml_files\DownloadWindow.xaml"
 if (-not (Test-Path $xamlPath)) {
-    [System.Windows.MessageBox]::Show("DownloadWindow.xaml not found after download.", "Error", "OK", "Error")
+    [System.Windows.MessageBox]::Show("DownloadWindow.xaml not found.", "Error", "OK", "Error")
     exit
 }
 
@@ -43,21 +48,19 @@ if (-not (Test-Path $xamlPath)) {
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
+# Get UI controls
+$productBox     = $window.FindName("ProductBox")
+$actionBox      = $window.FindName("ActionBox")
+$versionBox     = $window.FindName("VersionBox")
+$othersListBox  = $window.FindName("OthersListBox")
+$downloadBtn    = $window.FindName("DownloadBtn")
+$cancelBtn      = $window.FindName("CancelBtn")
+$progressBar    = $window.FindName("ProgressBar")
 
-
-# $reader = (New-Object System.Xml.XmlNodeReader $xaml)
-# $window = [Windows.Markup.XamlReader]::Load($reader)
-
-$productBox  = $window.FindName("ProductBox")
-$actionBox   = $window.FindName("ActionBox")
-$versionBox  = $window.FindName("VersionBox")
-$othersListBox = $window.FindName("OthersListBox")
-$downloadBtn = $window.FindName("DownloadBtn")
-$cancelBtn   = $window.FindName("CancelBtn")
-$progressBar = $window.FindName("ProgressBar")
-
+# Populate product dropdown
 $products | ForEach-Object { $productBox.Items.Add($_) }
 
+# Product Selection
 $productBox.Add_SelectionChanged({
     $selectedProduct = $productBox.SelectedItem
     if ($selectedProduct) {
@@ -75,6 +78,7 @@ $productBox.Add_SelectionChanged({
     }
 })
 
+# Action Selection
 $actionBox.Add_SelectionChanged({
     $selectedProduct = $productBox.SelectedItem
     $selectedAction = $actionBox.SelectedItem
@@ -103,9 +107,7 @@ $actionBox.Add_SelectionChanged({
     }
     elseif ($selectedProduct -and $selectedAction) {
         $versionBox.Items.Clear()
-        $jsonSection = $jsonData.PSObject.Properties |
-            Where-Object { $_.Name -eq $selectedProduct } |
-            Select-Object -ExpandProperty Value
+        $jsonSection = $jsonData.$selectedProduct
 
         if ($jsonSection) {
             $jsonSection.PSObject.Properties.Name |
@@ -117,114 +119,77 @@ $actionBox.Add_SelectionChanged({
     }
 })
 
+# Enable Download Button
 $versionBox.Add_SelectionChanged({
     $downloadBtn.IsEnabled = !!$versionBox.SelectedItem
 })
 
-function Download-File {
-    param (
-        [string]$url,
-        [string]$savePath
-    )
-
-    $psMajor = $PSVersionTable.PSVersion.Major
-
-    if ($psMajor -ge 3) {
-        # Use Invoke-WebRequest for PS 3.0 and above
-        Invoke-WebRequest -Uri $url -OutFile $savePath -UseBasicParsing
-    } else {
-        # Use BITS transfer as fallback for older PS versions
-        Start-BitsTransfer -Source $url -Destination $savePath
-    }
-}
-
+# Download Button Click
 $downloadBtn.Add_Click({
     try {
         $waitingWindowXaml = @"
 <Window xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'
         Title='Downloading' SizeToContent='WidthAndHeight' WindowStartupLocation='CenterScreen' ResizeMode='NoResize'>
     <StackPanel Margin='20'>
-        <TextBlock Text='Waiting for download to end...' FontSize='14' FontWeight='Bold' HorizontalAlignment='Center'/>
+        <TextBlock Text='Downloading, please wait...' FontSize='14' FontWeight='Bold' HorizontalAlignment='Center'/>
     </StackPanel>
 </Window>
 "@
-
         $reader = (New-Object System.Xml.XmlNodeReader ([xml]$waitingWindowXaml))
         $waitingWindow = [Windows.Markup.XamlReader]::Load($reader)
-
-        # Show the waiting window non-blocking
         $waitingWindow.Show()
 
-        # Run download async in background job
+        # Run in background job
         $job = Start-Job -ScriptBlock {
             param($product, $version, $selectedItems, $othersTag, $jsonData, $downloadFolder)
 
-            Add-Type -AssemblyName PresentationFramework
-
             function Download-FileInner {
                 param ($url, $savePath)
-                $psMajor = $PSVersionTable.PSVersion.Major
-                if ($psMajor -ge 3) {
-                    Invoke-WebRequest -Uri $url -OutFile $savePath -UseBasicParsing
+                if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+                    & curl.exe -L $url -o $savePath
                 } else {
                     Start-BitsTransfer -Source $url -Destination $savePath
                 }
             }
 
             if ($product -eq "Others") {
-                if (-not $selectedItems) {
-                    throw "Please select at least one component from Others."
-                }
-
                 foreach ($item in $selectedItems) {
                     $info = $othersTag[$item]
-                    $url = $info.Url
-                    $filename = Split-Path $url -Leaf
-                    $savePath = Join-Path $downloadFolder $filename
-                    Download-FileInner -url $url -savePath $savePath
+                    if ($info -and $info.Url) {
+                        $filename = Split-Path $info.Url -Leaf
+                        $savePath = Join-Path $downloadFolder $filename
+                        Download-FileInner -url $info.Url -savePath $savePath
+                    }
                 }
             } else {
                 $url = $jsonData.$product.$version
-                $productNameForFile = if ($product -like "*/*") { ($product -split '/')[1] } else { $product }
+                $productNameForFile = ($product -split '/')[1]
                 $savePath = Join-Path $downloadFolder "$productNameForFile-$version.msi"
                 Download-FileInner -url $url -savePath $savePath
             }
         } -ArgumentList $productBox.SelectedItem, $versionBox.SelectedItem, @($othersListBox.SelectedItems), $othersListBox.Tag, $jsonData, $folder_downloads
 
-        # Wait for job to finish
         $job | Wait-Job
-
-        # Check for errors
         $jobResult = Receive-Job -Job $job -ErrorAction SilentlyContinue
         $jobErrors = $job.ChildJobs[0].JobStateInfo.Reason
 
-        # Close waiting window
-        $waitingWindow.Dispatcher.Invoke([action]{
-            $waitingWindow.Close()
-        })
+        $waitingWindow.Dispatcher.Invoke([action]{ $waitingWindow.Close() })
 
-        if ($jobErrors) {
-            throw $jobErrors
-        }
+        if ($jobErrors) { throw $jobErrors }
 
         [System.Windows.MessageBox]::Show("Download completed.", "Success", "OK", "Information")
-
-        # Remove the job
         Remove-Job -Job $job -Force
+        $null = $jobResult
     }
     catch {
         if ($waitingWindow -and $waitingWindow.IsVisible) {
-            $waitingWindow.Dispatcher.Invoke([action]{
-                $waitingWindow.Close()
-            })
+            $waitingWindow.Dispatcher.Invoke([action]{ $waitingWindow.Close() })
         }
         [System.Windows.MessageBox]::Show("Download failed: $($_.Exception.Message)", "Error", "OK", "Error")
     }
 })
 
-$cancelBtn.Add_Click({ 
-    #$cancelBtn.IsEnabled = $false
-    $window.Close() 
-    })
+# Cancel button
+$cancelBtn.Add_Click({ $window.Close() })
 
 $window.ShowDialog() | Out-Null
