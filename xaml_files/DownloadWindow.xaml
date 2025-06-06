@@ -33,7 +33,7 @@
         </StackPanel>
 
         <!-- Others List -->
-        <ListBox x:Name="OthersListBox" Grid.Row="3" Height="150" Visibility="Collapsed" SelectionMode="Extended"/>
+        <ListBox x:Name="OthersListBox" Grid.Row="3" Height="150" Visibility="Collapsed" SelectionMode="Multiple"/>
 
         <!-- Buttons and Progress -->
         <StackPanel Orientation="Horizontal" Grid.Row="4" HorizontalAlignment="Right" Margin="0,20,0,0">
