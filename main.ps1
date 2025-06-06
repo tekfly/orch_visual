@@ -1,8 +1,12 @@
 # Relaunch script as Administrator if not already elevated
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
     [Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    
-    Start-Process powershell -Verb runAs -ArgumentList ("-ExecutionPolicy Bypass -File `"" + $MyInvocation.MyCommand.Path + "`"")
+
+    # Re-run this script as admin
+    $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Definition)`""
+    Start-Process powershell -ArgumentList $arguments -Verb RunAs
+
+    # Exit the non-admin instance
     exit
 }
 
