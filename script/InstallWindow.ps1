@@ -105,27 +105,27 @@ $InstallBtn.Add_Click({
         return
     }
 
-    $installType = Show-InstallTypeDialog
-    if (-not $installType) { return }
+    $args = @()
+    if ($selectedFile -match "Studio") {
+        $installType = Show-InstallTypeDialog
+        if (-not $installType) { return }
 
-    $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
-    if (-not (Test-Path $jsonPath)) {
-        [System.Windows.MessageBox]::Show("Component list JSON not found.")
-        return
+        $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
+        if (-not (Test-Path $jsonPath)) {
+            [System.Windows.MessageBox]::Show("Component list JSON not found.")
+            return
+        }
+
+        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $availableComponents = $json.studio
+
+        $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+        if ($selectedComponents.Count -eq 0) { return }
+
+        $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
     }
 
-    $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-    $availableComponents = if ($installType -eq "Studio") {
-        $json.studio
-    } else {
-        $json.robot
-    }
-
-    $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-    if ($selectedComponents.Count -eq 0) { return }
-
-    $filePath = Join-Path $PSScriptRoot $selectedFile
-    $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
+    $filePath = Join-Path $folder_downloads $selectedFile
     Execute-Installer -FileName $filePath -Arguments $args
 })
 
