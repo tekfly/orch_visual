@@ -27,8 +27,8 @@ $xamlFiles = @(
     @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/DownloadWindow.xaml";    FileName = "DownloadWindow.xaml" },
     @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/ComponentOptions.xaml";  FileName = "ComponentOptions.xaml" },
     @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/InstallTypeDialog.xaml"; FileName = "InstallTypeDialog.xaml" },
-    @{ URL = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/Connect.xaml"; FileName ="ConnectWindow.xaml"}
-    @{ URL = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/WaitingWindow.xaml"; FileName ="WaitingWindow.xaml"}
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/Connect.xaml"; FileName ="ConnectWindow.xaml"}
+    @{ Url = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/xaml_files/WaitingWindow.xaml"; FileName ="WaitingWindow.xaml"}
 )
 
 function Download-Files {
