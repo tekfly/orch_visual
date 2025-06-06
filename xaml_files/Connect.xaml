@@ -9,11 +9,11 @@
     <Grid>
         <Rectangle HorizontalAlignment="Left" Height="149" Margin="68,96,0,0" Stroke="Black" VerticalAlignment="Top" Width="660"/>
         <Label x:Name="lblOrch_URL" Content="Orchestrator URL" HorizontalAlignment="Left" Margin="77,106,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="OrchUrl_textbox" HorizontalAlignment="Left" Margin="206,110,0,0" TextWrapping="Wrap" Text="Insert URL" VerticalAlignment="Top" Width="509"/>
+        <TextBox x:Name="OrchUrl_textbox" HorizontalAlignment="Left" Margin="206,110,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="509"/>
         <Label x:Name="lblClientID" Content="Client ID" HorizontalAlignment="Left" Margin="77,137,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="ClientID_textbox" HorizontalAlignment="Left" Margin="206,141,0,0" TextWrapping="Wrap" Text="Insert Client ID" VerticalAlignment="Top" Width="509"/>
+        <TextBox x:Name="ClientID_textbox" HorizontalAlignment="Left" Margin="206,141,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="509"/>
         <Label x:Name="lblsecret" Content="Client Secret" HorizontalAlignment="Left" Margin="77,175,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="secret_textbox" HorizontalAlignment="Left" Margin="206,179,0,0" TextWrapping="Wrap" Text="Insert Client Secret" VerticalAlignment="Top" Width="509"/>
+        <TextBox x:Name="secret_textbox" HorizontalAlignment="Left" Margin="206,179,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="509"/>
         <Button x:Name="CancelBtn" Content="Cancel" HorizontalAlignment="Left" Margin="77,292,0,0" VerticalAlignment="Top"/>
         <Button x:Name="ConnectBtn" Content="Connect" HorizontalAlignment="Left" Margin="638,292,0,0" VerticalAlignment="Top"/>
         <Label Content="Please Fill the information to connect to the Orchestrator" HorizontalAlignment="Left" Margin="242,47,0,0" VerticalAlignment="Top"/>
