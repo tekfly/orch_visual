@@ -6,6 +6,23 @@ $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
 $folder_downloads = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\downloads"
 
+# Define install parameter sets
+# $studioParams = @("/studioParam=SpecificStudioValue")           # Replace with actual studio params
+# $robotParams = @("/robotParam=SpecificRobotValue")              # Replace with actual robot params
+$robotParams = @(
+    "/i", "$global:down_robot",
+    "ADDLOCAL=DesktopFeature,Robot,RegisterService,Packages,ChromeExtension",
+    "/l*vx", "log_robot.txt",
+    "/qn"
+)
+$studioParams = @(
+    "/i", "$global:down_robot",
+    "ADDLOCAL=DesktopFeature,Studio,RegisterService,Packages,ChromeExtension",
+    "/l*vx", "log_studio.txt",
+    "/qn"
+)
+$chromeParams = @("--silent", "--do-not-launch-chrome", "--no-default-browser-check")
+
 # Load XAML content
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
 [xml]$installTypeXaml = Get-Content -Raw -Path $InstallTypeXamlPath
@@ -108,7 +125,8 @@ $InstallBtn.Add_Click({
     $args = @()
     $filePath = Join-Path $folder_downloads $selectedFile
 
-    # Studio-specific logic
+    # Determine install type for Studio or Robot
+    $installType = $null
     if ($selectedFile -match "Studio") {
         $installType = Show-InstallTypeDialog
         if (-not $installType) { return }
@@ -120,17 +138,24 @@ $InstallBtn.Add_Click({
         }
 
         $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-        $availableComponents = $json.studio
+        $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
 
         $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
         if ($selectedComponents.Count -eq 0) { return }
 
         $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
+
+        # Append install-type-specific parameters
+        if ($installType -eq "Studio") {
+            $args += $studioParams
+        } elseif ($installType -eq "Robot") {
+            $args += $robotParams
+        }
     }
 
-    # Chrome-specific silent install
+    # Chrome silent install
     elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
-        $args = @("--silent", "--do-not-launch-chrome", "--no-default-browser-check")
+        $args = $chromeParams
     }
 
     # Execute and log
