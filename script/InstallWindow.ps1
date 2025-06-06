@@ -136,8 +136,8 @@ $InstallBtn.Add_Click({
 
     # First pass: check if any files need install type & component selection
     foreach ($selectedFile in $selectedFiles) {
-        if ($selectedFile -match "Studio|Robot") {
-            $filesRequiringSelection += $selectedFile
+        if ($selectedFile -imatch "studio") {
+        $filesRequiringSelection += $selectedFile
         }
     }
 
