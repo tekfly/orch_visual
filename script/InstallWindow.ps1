@@ -4,6 +4,7 @@ $XamlPath = Join-Path $downloadFolder "xaml_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
+$WaitingWindowXamlPath = Join-Path $XamlPath "WaitingWindow.xaml"   # Added
 $folder_downloads = Join-Path $downloadFolder "downloads"
 $masterLogPath = Join-Path $downloadFolder "install_log.txt"
 
@@ -20,6 +21,8 @@ $chromeInstallParams = @(
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
 [xml]$installTypeXaml = Get-Content -Raw -Path $InstallTypeXamlPath
 [xml]$componentOptionsTemplate = Get-Content -Raw -Path $ComponentOptionsXamlPath
+[xml]$waitingWindowXaml = Get-Content -Raw -Path $WaitingWindowXamlPath   # Added
+
 Add-Type -AssemblyName PresentationFramework
 
 function Load-XamlWindow {
@@ -31,6 +34,8 @@ function Load-XamlWindow {
 # GUI elements
 $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
+$waitingWindow = Load-XamlWindow $waitingWindowXaml   # Added
+
 $FilesListBox = $mainWindow.FindName("FilesListBox")
 $InstallBtn = $mainWindow.FindName("InstallBtn")
 $RefreshBtn = $mainWindow.FindName("RefreshBtn")
@@ -70,7 +75,7 @@ function Show-ComponentOptionsDialog {
     [xml]$xaml = Get-Content -Raw -Path $ComponentOptionsXamlPath
     $window = Load-XamlWindow $xaml
     $panel = $window.FindName("ComponentsPanel")
-    $checkboxes = @{}
+    $checkboxes = @{ }
 
     foreach ($option in $Options) {
         $cb = New-Object System.Windows.Controls.CheckBox
@@ -103,6 +108,16 @@ function Execute-Installer {
         [string]$LogFile
     )
 
+    # Show waiting window - ensure invoked on UI thread
+    $null = $waitingWindow.Dispatcher.Invoke([action]{
+        # Optional: set label text if exists
+        $statusLabel = $waitingWindow.FindName("StatusLabel")
+        if ($statusLabel) {
+            $statusLabel.Content = "Installing: $([IO.Path]::GetFileName($FilePath))"
+        }
+        $waitingWindow.Show()
+    })
+
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $FilePath
     $psi.Arguments = $Arguments -join " "
@@ -110,8 +125,14 @@ function Execute-Installer {
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
 
-    $process = [System.Diagnostics.Process]::Start($psi)
-    $process.WaitForExit()
+    try {
+        $process = [System.Diagnostics.Process]::Start($psi)
+        $process.WaitForExit()
+    }
+    finally {
+        # Close waiting window
+        $null = $waitingWindow.Dispatcher.Invoke([action]{ $waitingWindow.Close() })
+    }
 }
 
 $InstallBtn.Add_Click({
@@ -164,7 +185,11 @@ $InstallBtn.Add_Click({
         }
 
         Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
-    } catch {
+
+        # Show completion message after install
+        [System.Windows.MessageBox]::Show("Installation of '$selectedFile' finished successfully.")
+    }
+    catch {
         Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
         [System.Windows.MessageBox]::Show("Installation failed. Check the log for details.")
     }
