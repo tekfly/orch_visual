@@ -119,6 +119,10 @@ function Execute-Installer {
     $process.WaitForExit()
 }
 
+$waitingWindow = Load-XamlWindow $waitingXaml
+$progressBar = $waitingWindow.FindName("InstallProgressBar")
+$statusText = $waitingWindow.FindName("InstallStatusText")
+
 $InstallBtn.Add_Click({
     $selectedFiles = $FilesListBox.SelectedItems
     if (-not $selectedFiles -or $selectedFiles.Count -eq 0) {
@@ -126,6 +130,9 @@ $InstallBtn.Add_Click({
         return
     }
 
+    $progressBar.Value = 0
+    $progressBar.Maximum = $selectedFiles.Count
+    $statusText.Text = "Installing..."
     $waitingWindow.Show()
     Start-Sleep -Milliseconds 200
 
@@ -137,6 +144,8 @@ $InstallBtn.Add_Click({
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
         try {
+            $statusText.Text = "Installing $selectedFile..."
+
             if ($selectedFile -match "Studio|Robot") {
                 $installType = Show-InstallTypeDialog
                 if (-not $installType) { continue }
@@ -177,11 +186,17 @@ $InstallBtn.Add_Click({
             Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
             [System.Windows.MessageBox]::Show("Installation failed for $selectedFile. Check the log for details.")
         }
+
+        # Update progress
+        $progressBar.Value += 1
     }
 
+    $statusText.Text = "Done!"
+    Start-Sleep -Seconds 1
     $waitingWindow.Close()
     [System.Windows.MessageBox]::Show("Installation(s) completed.")
 })
+
 
 $RefreshBtn.Add_Click({ Update-FileList })
 $CancelBtn.Add_Click({ $mainWindow.Close() })
