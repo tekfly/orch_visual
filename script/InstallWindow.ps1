@@ -131,18 +131,58 @@ $InstallBtn.Add_Click({
         return
     }
 
-    # Initialize progress bar and status text
+    # Prepare variables for files that need Studio/Robot type & components selection
+    $filesRequiringSelection = @()
+
+    # First pass: check if any files need install type & component selection
+    foreach ($selectedFile in $selectedFiles) {
+        if ($selectedFile -match "Studio|Robot") {
+            $filesRequiringSelection += $selectedFile
+        }
+    }
+
+    # Dictionary to hold install type and components selection per file
+    $installSelections = @{}
+
+    # Ask for Studio/Robot install type and components BEFORE showing waiting window
+    foreach ($file in $filesRequiringSelection) {
+        $installType = Show-InstallTypeDialog
+        if (-not $installType) {
+            # User cancelled selection, skip this file
+            continue
+        }
+
+        $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
+        if (-not (Test-Path $jsonPath)) {
+            [System.Windows.MessageBox]::Show("Component list JSON not found.")
+            return
+        }
+
+        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
+        $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+        if ($selectedComponents.Count -eq 0) {
+            # No components selected, skip this file
+            continue
+        }
+
+        # Save selections for later use during install
+        $installSelections[$file] = @{
+            InstallType = $installType
+            Components = $selectedComponents
+        }
+    }
+
+    # Now, initialize and show the waiting window AFTER selections are done
     $progressBar.Minimum = 0
     $progressBar.Maximum = $selectedFiles.Count
     $progressBar.Value = 0
     $statusText.Text = "Starting installation..."
 
-    # Show waiting window
     $waitingWindow.Show()
-
-    # Small delay to render the waiting window before heavy work
     Start-Sleep -Milliseconds 200
 
+    # Begin installation loop
     foreach ($selectedFile in $selectedFiles) {
         $filePath = Join-Path $folder_downloads $selectedFile
         $args = @()
@@ -150,28 +190,15 @@ $InstallBtn.Add_Click({
         $logPath = Join-Path $downloadFolder $logFileName
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-        # Update status text with current file name (run in UI thread)
         $statusText.Dispatcher.Invoke([action]{ $statusText.Text = "Installing: $selectedFile" })
 
         try {
-            if ($selectedFile -match "Studio|Robot") {
-                $installType = Show-InstallTypeDialog
-                if (-not $installType) { continue }
-
-                $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
-                if (-not (Test-Path $jsonPath)) {
-                    [System.Windows.MessageBox]::Show("Component list JSON not found.")
-                    continue
-                }
-
-                $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-                $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
-                $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-                if ($selectedComponents.Count -eq 0) { continue }
-
+            # Use saved install type and components if available
+            if ($installSelections.ContainsKey($selectedFile)) {
+                $selection = $installSelections[$selectedFile]
                 $args = @(
                     "/i", "`"$filePath`"",
-                    ($selectedComponents | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
+                    ($selection.Components | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
                     "$logSwitch `"$logPath`"",
                     $quietSwitch
                 )
@@ -190,23 +217,20 @@ $InstallBtn.Add_Click({
             }
 
             Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
-        } catch {
+        }
+        catch {
             Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
             [System.Windows.MessageBox]::Show("Installation failed for $selectedFile. Check the log for details.")
         }
 
-        # Increment progress bar value and force UI update
         $progressBar.Dispatcher.Invoke([action]{ $progressBar.Value += 1 })
-        # Force UI to render updated progress bar and text
         [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
     }
 
-    # Close waiting window after all installs finish
     $waitingWindow.Close()
-
-    # Show completion message
     [System.Windows.MessageBox]::Show("Installation(s) completed.")
 })
+
 
 $RefreshBtn.Add_Click({ Update-FileList })
 $CancelBtn.Add_Click({ $mainWindow.Close() })
