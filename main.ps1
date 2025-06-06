@@ -1,8 +1,9 @@
 # Relaunch script as Administrator if not already elevated
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole] "Administrator")) {
 
-    $arguments = "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Definition)`""
+    $cmd = 'irm https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/main.ps1 | iex'
+    $arguments = "-NoExit -NoProfile -ExecutionPolicy Bypass -Command `$ErrorActionPreference = 'Stop'; $cmd"
     Start-Process powershell -ArgumentList $arguments -Verb RunAs
     exit
 }
