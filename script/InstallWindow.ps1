@@ -134,7 +134,7 @@ $RefreshBtn.Add_Click({
 })
 
 $CancelBtn.Add_Click({
-    $mainWindow.Close()
+    $mainWindow.Close
 })
 
 Update-FileList
