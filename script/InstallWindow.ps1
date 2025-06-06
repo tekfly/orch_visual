@@ -152,14 +152,17 @@ $InstallBtn.Add_Click({
             continue
         }
 
-        $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
+        $jsonPath = Join-Path $PSScriptRoot "InstallComponents.json"
         if (-not (Test-Path $jsonPath)) {
             [System.Windows.MessageBox]::Show("Component list JSON not found.")
             return
         }
 
         $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-        $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
+        
+        # FIXED: Access defaults.Studio or defaults.Robot, not studio or robot directly
+        $availableComponents = if ($installType -eq "Studio") { $json.defaults.Studio } else { $json.defaults.Robot }
+        
         $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
         if ($selectedComponents.Count -eq 0) {
             # No components selected, skip this file
@@ -198,7 +201,7 @@ $InstallBtn.Add_Click({
                 $selection = $installSelections[$selectedFile]
                 $args = @(
                     "/i", "`"$filePath`"",
-                    ($selection.Components | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
+                    "ADDLOCAL=" + ($selection.Components -join ","),
                     "$logSwitch `"$logPath`"",
                     $quietSwitch
                 )
@@ -230,7 +233,6 @@ $InstallBtn.Add_Click({
     $waitingWindow.Close()
     [System.Windows.MessageBox]::Show("Installation(s) completed.")
 })
-
 
 $RefreshBtn.Add_Click({ Update-FileList })
 $CancelBtn.Add_Click({ $mainWindow.Close() })
