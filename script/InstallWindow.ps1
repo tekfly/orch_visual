@@ -1,10 +1,11 @@
-# Define paths to XAML files
-$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\"
-$XamlPath = Join-Path -Path $downloadFolder -ChildPath "xaml_files"
+# Define paths
+$downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
+$XamlPath = Join-Path $downloadFolder "xaml_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
-$folder_downloads = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\downloads"
+$folder_downloads = Join-Path $downloadFolder "downloads"
+$masterLogPath = Join-Path $downloadFolder "install_log.txt"
 
 # Define shared install parameters
 $quietSwitch = "/qn"
@@ -15,19 +16,19 @@ $chromeInstallParams = @(
     "--no-default-browser-check"
 )
 
-# Load XAML content
+# Load XAML files
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
 [xml]$installTypeXaml = Get-Content -Raw -Path $InstallTypeXamlPath
 [xml]$componentOptionsTemplate = Get-Content -Raw -Path $ComponentOptionsXamlPath
-
 Add-Type -AssemblyName PresentationFramework
 
 function Load-XamlWindow {
     param ([xml]$xaml)
-    $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+    $reader = New-Object System.Xml.XmlNodeReader $xaml
     return [Windows.Markup.XamlReader]::Load($reader)
 }
 
+# GUI elements
 $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
 $FilesListBox = $mainWindow.FindName("FilesListBox")
@@ -48,6 +49,7 @@ function Update-FileList {
     $files | ForEach-Object { $FilesListBox.Items.Add($_.Name) }
 }
 
+# Checkbox events
 $ChkMsi.Add_Checked({ Update-FileList })
 $ChkExe.Add_Checked({ Update-FileList })
 $ChkPs1.Add_Checked({ Update-FileList })
@@ -65,12 +67,11 @@ function Show-InstallTypeDialog {
 
 function Show-ComponentOptionsDialog {
     param ([string[]]$Options)
-
     [xml]$xaml = Get-Content -Raw -Path $ComponentOptionsXamlPath
     $window = Load-XamlWindow $xaml
     $panel = $window.FindName("ComponentsPanel")
-
     $checkboxes = @{}
+
     foreach ($option in $Options) {
         $cb = New-Object System.Windows.Controls.CheckBox
         $cb.Content = $option
@@ -97,14 +98,20 @@ function Show-ComponentOptionsDialog {
 
 function Execute-Installer {
     param (
-        [string]$FileName,
-        [string[]]$Arguments
+        [string]$FilePath,
+        [string[]]$Arguments,
+        [string]$LogFile
     )
+
     $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $FileName
+    $psi.FileName = $FilePath
     $psi.Arguments = $Arguments -join " "
-    $psi.UseShellExecute = $true
-    [System.Diagnostics.Process]::Start($psi) | Out-Null
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+
+    $process = [System.Diagnostics.Process]::Start($psi)
+    $process.WaitForExit()
 }
 
 $InstallBtn.Add_Click({
@@ -114,13 +121,14 @@ $InstallBtn.Add_Click({
         return
     }
 
-    $args = @()
     $filePath = Join-Path $folder_downloads $selectedFile
-    $logPath = Join-Path $downloadFolder "install_log.txt"
+    $args = @()
+    $logFileName = "log_$selectedFile.txt"
+    $logPath = Join-Path $downloadFolder $logFileName
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
     try {
-        if ($selectedFile -match "Studio") {
+        if ($selectedFile -match "Studio|Robot") {
             $installType = Show-InstallTypeDialog
             if (-not $installType) { return }
 
@@ -132,37 +140,38 @@ $InstallBtn.Add_Click({
 
             $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
             $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
-
             $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
             if ($selectedComponents.Count -eq 0) { return }
 
-            $componentArgs = $selectedComponents | ForEach-Object { "/addlocal=$_" }
-            $logFileName = if ($installType -eq "Studio") { "log_studio.txt" } else { "log_robot.txt" }
-
-            $args += $componentArgs
-            $args += $logSwitch
-            $args += $logFileName
-            $args += $quietSwitch
+            $args = @(
+                "/i", "`"$filePath`"",
+                ($selectedComponents | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
+                "$logSwitch `"$logPath`"",
+                $quietSwitch
+            )
+            Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
         }
         elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
-            $args = $chromeInstallParams
+            Execute-Installer -FilePath $filePath -Arguments $chromeInstallParams -LogFile $logPath
+        }
+        elseif ($selectedFile -like "*.msi") {
+            $args = @("/i", "`"$filePath`"", "$logSwitch `"$logPath`"", $quietSwitch)
+            Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
+        }
+        elseif ($selectedFile -like "*.exe") {
+            $args = @("/S", "/quiet", "/norestart")
+            Execute-Installer -FilePath $filePath -Arguments $args -LogFile $logPath
         }
 
-        Execute-Installer -FileName $filePath -Arguments $args
-        Add-Content -Path $logPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
+        Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
     } catch {
-        Add-Content -Path $logPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
+        Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
         [System.Windows.MessageBox]::Show("Installation failed. Check the log for details.")
     }
 })
 
-$RefreshBtn.Add_Click({
-    Update-FileList
-})
-
-$CancelBtn.Add_Click({
-    $mainWindow.Close()
-})
+$RefreshBtn.Add_Click({ Update-FileList })
+$CancelBtn.Add_Click({ $mainWindow.Close() })
 
 Update-FileList
 $mainWindow.ShowDialog() | Out-Null
