@@ -115,60 +115,63 @@ function Execute-Installer {
 }
 
 $InstallBtn.Add_Click({
-    $selectedFile = $FilesListBox.SelectedItem
-    if (-not $selectedFile) {
-        [System.Windows.MessageBox]::Show("Please select a file to install.")
+    $selectedFiles = $FilesListBox.SelectedItems
+    if (-not $selectedFiles -or $selectedFiles.Count -eq 0) {
+        [System.Windows.MessageBox]::Show("Please select at least one file to install.")
         return
     }
 
-    $filePath = Join-Path $folder_downloads $selectedFile
-    $args = @()
-    $logFileName = "log_$selectedFile.txt"
-    $logPath = Join-Path $downloadFolder $logFileName
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    foreach ($selectedFile in $selectedFiles) {
+        $filePath = Join-Path $folder_downloads $selectedFile
+        $args = @()
+        $logFileName = "log_$selectedFile.txt"
+        $logPath = Join-Path $downloadFolder $logFileName
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-    try {
-        if ($selectedFile -match "Studio|Robot") {
-            $installType = Show-InstallTypeDialog
-            if (-not $installType) { return }
+        try {
+            if ($selectedFile -match "Studio|Robot") {
+                $installType = Show-InstallTypeDialog
+                if (-not $installType) { continue }
 
-            $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
-            if (-not (Test-Path $jsonPath)) {
-                [System.Windows.MessageBox]::Show("Component list JSON not found.")
-                return
+                $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
+                if (-not (Test-Path $jsonPath)) {
+                    [System.Windows.MessageBox]::Show("Component list JSON not found.")
+                    continue
+                }
+
+                $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+                $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
+                $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+                if ($selectedComponents.Count -eq 0) { continue }
+
+                $args = @(
+                    "/i", "`"$filePath`"",
+                    ($selectedComponents | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
+                    "$logSwitch `"$logPath`"",
+                    $quietSwitch
+                )
+                Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
+            }
+            elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
+                Execute-Installer -FilePath $filePath -Arguments $chromeInstallParams -LogFile $logPath
+            }
+            elseif ($selectedFile -like "*.msi") {
+                $args = @("/i", "`"$filePath`"", "$logSwitch `"$logPath`"", $quietSwitch)
+                Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
+            }
+            elseif ($selectedFile -like "*.exe") {
+                $args = @("/S", "/quiet", "/norestart")
+                Execute-Installer -FilePath $filePath -Arguments $args -LogFile $logPath
             }
 
-            $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-            $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
-            $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-            if ($selectedComponents.Count -eq 0) { return }
-
-            $args = @(
-                "/i", "`"$filePath`"",
-                ($selectedComponents | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
-                "$logSwitch `"$logPath`"",
-                $quietSwitch
-            )
-            Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
+            Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
+        } catch {
+            Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
+            [System.Windows.MessageBox]::Show("Installation failed for $selectedFile. Check the log for details.")
         }
-        elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
-            Execute-Installer -FilePath $filePath -Arguments $chromeInstallParams -LogFile $logPath
-        }
-        elseif ($selectedFile -like "*.msi") {
-            $args = @("/i", "`"$filePath`"", "$logSwitch `"$logPath`"", $quietSwitch)
-            Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
-        }
-        elseif ($selectedFile -like "*.exe") {
-            $args = @("/S", "/quiet", "/norestart")
-            Execute-Installer -FilePath $filePath -Arguments $args -LogFile $logPath
-        }
-
-        Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
-    } catch {
-        Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
-        [System.Windows.MessageBox]::Show("Installation failed. Check the log for details.")
     }
 })
+
 
 $RefreshBtn.Add_Click({ Update-FileList })
 $CancelBtn.Add_Click({ $mainWindow.Close() })
