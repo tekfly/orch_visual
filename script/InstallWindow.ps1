@@ -106,6 +106,9 @@ $InstallBtn.Add_Click({
     }
 
     $args = @()
+    $filePath = Join-Path $folder_downloads $selectedFile
+
+    # Studio-specific logic
     if ($selectedFile -match "Studio") {
         $installType = Show-InstallTypeDialog
         if (-not $installType) { return }
@@ -125,8 +128,21 @@ $InstallBtn.Add_Click({
         $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
     }
 
-    $filePath = Join-Path $folder_downloads $selectedFile
-    Execute-Installer -FileName $filePath -Arguments $args
+    # Chrome-specific silent install
+    elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
+        $args = @("--silent", "--do-not-launch-chrome", "--no-default-browser-check")
+    }
+
+    # Execute and log
+    $logPath = Join-Path $downloadFolder "install_log.txt"
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    try {
+        Execute-Installer -FileName $filePath -Arguments $args
+        Add-Content -Path $logPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
+    } catch {
+        Add-Content -Path $logPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
+        [System.Windows.MessageBox]::Show("Installation failed. Check the log for details.")
+    }
 })
 
 $RefreshBtn.Add_Click({
