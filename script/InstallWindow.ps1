@@ -4,9 +4,9 @@ $XamlPath = Join-Path $downloadFolder "xaml_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
-$WaitingWindowXamlPath = Join-Path $XamlPath "WaitingWindow.xaml"
 $folder_downloads = Join-Path $downloadFolder "downloads"
 $masterLogPath = Join-Path $downloadFolder "install_log.txt"
+$WaitingWindowXamlPath = Join-Path $XamlPath "WaitingWindow.xaml"
 
 # Define shared install parameters
 $quietSwitch = "/qn"
@@ -31,11 +31,12 @@ function Load-XamlWindow {
     return [Windows.Markup.XamlReader]::Load($reader)
 }
 
-# GUI elements
+# Load windows
 $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
 $waitingWindow = Load-XamlWindow $waitingXaml
 
+# Find UI elements
 $FilesListBox = $mainWindow.FindName("FilesListBox")
 $InstallBtn = $mainWindow.FindName("InstallBtn")
 $RefreshBtn = $mainWindow.FindName("RefreshBtn")
@@ -43,6 +44,10 @@ $CancelBtn = $mainWindow.FindName("CancelBtn")
 $ChkMsi = $mainWindow.FindName("ChkMsi")
 $ChkExe = $mainWindow.FindName("ChkExe")
 $ChkPs1 = $mainWindow.FindName("ChkPs1")
+
+# WaitingWindow controls
+$progressBar = $waitingWindow.FindName("InstallProgressBar")
+$statusText = $waitingWindow.FindName("InstallStatusText")
 
 function Update-FileList {
     $FilesListBox.Items.Clear()
@@ -119,10 +124,6 @@ function Execute-Installer {
     $process.WaitForExit()
 }
 
-$waitingWindow = Load-XamlWindow $waitingXaml
-$progressBar = $waitingWindow.FindName("InstallProgressBar")
-$statusText = $waitingWindow.FindName("InstallStatusText")
-
 $InstallBtn.Add_Click({
     $selectedFiles = $FilesListBox.SelectedItems
     if (-not $selectedFiles -or $selectedFiles.Count -eq 0) {
@@ -130,10 +131,16 @@ $InstallBtn.Add_Click({
         return
     }
 
-    $progressBar.Value = 0
+    # Initialize progress bar and status text
+    $progressBar.Minimum = 0
     $progressBar.Maximum = $selectedFiles.Count
-    $statusText.Text = "Installing..."
+    $progressBar.Value = 0
+    $statusText.Text = "Starting installation..."
+
+    # Show waiting window
     $waitingWindow.Show()
+
+    # Small delay to render the waiting window before heavy work
     Start-Sleep -Milliseconds 200
 
     foreach ($selectedFile in $selectedFiles) {
@@ -143,9 +150,10 @@ $InstallBtn.Add_Click({
         $logPath = Join-Path $downloadFolder $logFileName
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-        try {
-            $statusText.Text = "Installing $selectedFile..."
+        # Update status text with current file name (run in UI thread)
+        $statusText.Dispatcher.Invoke([action]{ $statusText.Text = "Installing: $selectedFile" })
 
+        try {
             if ($selectedFile -match "Studio|Robot") {
                 $installType = Show-InstallTypeDialog
                 if (-not $installType) { continue }
@@ -187,16 +195,18 @@ $InstallBtn.Add_Click({
             [System.Windows.MessageBox]::Show("Installation failed for $selectedFile. Check the log for details.")
         }
 
-        # Update progress
-        $progressBar.Value += 1
+        # Increment progress bar value and force UI update
+        $progressBar.Dispatcher.Invoke([action]{ $progressBar.Value += 1 })
+        # Force UI to render updated progress bar and text
+        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
     }
 
-    $statusText.Text = "Done!"
-    Start-Sleep -Seconds 1
+    # Close waiting window after all installs finish
     $waitingWindow.Close()
+
+    # Show completion message
     [System.Windows.MessageBox]::Show("Installation(s) completed.")
 })
-
 
 $RefreshBtn.Add_Click({ Update-FileList })
 $CancelBtn.Add_Click({ $mainWindow.Close() })
