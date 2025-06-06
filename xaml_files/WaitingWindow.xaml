@@ -5,7 +5,7 @@
     <Grid>
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Name="InstallStatusText" FontSize="16" Margin="10" TextAlignment="Center"/>
-            <ProgressBar x:Name="ProgressBar" Height="20" Margin="10" IsIndeterminate="False" Visibility="Collapsed"/>
+            <ProgressBar IsIndeterminate="True" Width="250" Height="20" Margin="10"/>
         </StackPanel>
     </Grid>
 </Window>
