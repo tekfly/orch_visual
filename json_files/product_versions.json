@@ -21,5 +21,8 @@
   },
   "UiPath_Powershell": {
     "Latest": "https://raw.githubusercontent.com/UiPath/Infrastructure/master/Setup/InstallRolesAndFeatures.ps1"
+  },
+  "NotePad++": {
+    "8.8": "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.8/npp.8.8.Installer.x64.exe"
   }
 }

@@ -6,22 +6,14 @@ $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
 $folder_downloads = Join-Path $env:USERPROFILE "Downloads\UiPath_temp\downloads"
 
-# Define install parameter sets
-# $studioParams = @("/studioParam=SpecificStudioValue")           # Replace with actual studio params
-# $robotParams = @("/robotParam=SpecificRobotValue")              # Replace with actual robot params
-$robotParams = @(
-    "/i", "$global:down_robot",
-    "ADDLOCAL=DesktopFeature,Robot,RegisterService,Packages,ChromeExtension",
-    "/l*vx", "log_robot.txt",
-    "/qn"
+# Define shared install parameters
+$quietSwitch = "/qn"
+$logSwitch = "/l*vx"
+$chromeInstallParams = @(
+    "--silent",
+    "--do-not-launch-chrome",
+    "--no-default-browser-check"
 )
-$studioParams = @(
-    "/i", "$global:down_robot",
-    "ADDLOCAL=DesktopFeature,Studio,RegisterService,Packages,ChromeExtension",
-    "/l*vx", "log_studio.txt",
-    "/qn"
-)
-$chromeParams = @("--silent", "--do-not-launch-chrome", "--no-default-browser-check")
 
 # Load XAML content
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
@@ -124,44 +116,38 @@ $InstallBtn.Add_Click({
 
     $args = @()
     $filePath = Join-Path $folder_downloads $selectedFile
-
-    # Determine install type for Studio or Robot
-    $installType = $null
-    if ($selectedFile -match "Studio") {
-        $installType = Show-InstallTypeDialog
-        if (-not $installType) { return }
-
-        $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
-        if (-not (Test-Path $jsonPath)) {
-            [System.Windows.MessageBox]::Show("Component list JSON not found.")
-            return
-        }
-
-        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-        $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
-
-        $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-        if ($selectedComponents.Count -eq 0) { return }
-
-        $args = $selectedComponents | ForEach-Object { "/addlocal=$_" }
-
-        # Append install-type-specific parameters
-        if ($installType -eq "Studio") {
-            $args += $studioParams
-        } elseif ($installType -eq "Robot") {
-            $args += $robotParams
-        }
-    }
-
-    # Chrome silent install
-    elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
-        $args = $chromeParams
-    }
-
-    # Execute and log
     $logPath = Join-Path $downloadFolder "install_log.txt"
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
     try {
+        if ($selectedFile -match "Studio") {
+            $installType = Show-InstallTypeDialog
+            if (-not $installType) { return }
+
+            $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
+            if (-not (Test-Path $jsonPath)) {
+                [System.Windows.MessageBox]::Show("Component list JSON not found.")
+                return
+            }
+
+            $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+            $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
+
+            $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+            if ($selectedComponents.Count -eq 0) { return }
+
+            $componentArgs = $selectedComponents | ForEach-Object { "/addlocal=$_" }
+            $logFileName = if ($installType -eq "Studio") { "log_studio.txt" } else { "log_robot.txt" }
+
+            $args += $componentArgs
+            $args += $logSwitch
+            $args += $logFileName
+            $args += $quietSwitch
+        }
+        elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
+            $args = $chromeInstallParams
+        }
+
         Execute-Installer -FileName $filePath -Arguments $args
         Add-Content -Path $logPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
     } catch {
