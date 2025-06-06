@@ -4,7 +4,7 @@ $XamlPath = Join-Path $downloadFolder "xaml_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
-$WaitingWindowXamlPath = Join-Path $XamlPath "WaitingWindow.xaml"
+$WaitingWindowXamlPath = Join-Path $XamlPath "WaitingWindow.xaml"   # Added
 $folder_downloads = Join-Path $downloadFolder "downloads"
 $masterLogPath = Join-Path $downloadFolder "install_log.txt"
 
@@ -21,7 +21,7 @@ $chromeInstallParams = @(
 [xml]$mainXaml = Get-Content -Raw -Path $InstallWindowXamlPath
 [xml]$installTypeXaml = Get-Content -Raw -Path $InstallTypeXamlPath
 [xml]$componentOptionsTemplate = Get-Content -Raw -Path $ComponentOptionsXamlPath
-[xml]$waitingWindowXaml = Get-Content -Raw -Path $WaitingWindowXamlPath
+[xml]$waitingWindowXaml = Get-Content -Raw -Path $WaitingWindowXamlPath   # Added
 
 Add-Type -AssemblyName PresentationFramework
 
@@ -34,7 +34,7 @@ function Load-XamlWindow {
 # GUI elements
 $mainWindow = Load-XamlWindow $mainXaml
 $installTypeWindow = Load-XamlWindow $installTypeXaml
-$waitingWindow = Load-XamlWindow $waitingWindowXaml
+$waitingWindow = Load-XamlWindow $waitingWindowXaml   # Added
 
 $FilesListBox = $mainWindow.FindName("FilesListBox")
 $InstallBtn = $mainWindow.FindName("InstallBtn")
@@ -54,6 +54,7 @@ function Update-FileList {
     $files | ForEach-Object { $FilesListBox.Items.Add($_.Name) }
 }
 
+# Checkbox events
 $ChkMsi.Add_Checked({ Update-FileList })
 $ChkExe.Add_Checked({ Update-FileList })
 $ChkPs1.Add_Checked({ Update-FileList })
@@ -107,108 +108,91 @@ function Execute-Installer {
         [string]$LogFile
     )
 
+    # Show waiting window - ensure invoked on UI thread
     $null = $waitingWindow.Dispatcher.Invoke([action]{
+        # Optional: set label text if exists
         $statusLabel = $waitingWindow.FindName("StatusLabel")
         if ($statusLabel) {
             $statusLabel.Content = "Installing: $([IO.Path]::GetFileName($FilePath))"
         }
-
-        $progressBar = $waitingWindow.FindName("ProgressBar")
-        if ($progressBar) {
-            $progressBar.IsIndeterminate = $true
-            $progressBar.Visibility = 'Visible'
-        }
         $waitingWindow.Show()
     })
 
-    $job = Start-Job {
-        param($file, $args)
-        $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = $file
-        $psi.Arguments = $args -join " "
-        $psi.UseShellExecute = $false
-        $psi.RedirectStandardOutput = $true
-        $psi.RedirectStandardError = $true
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $FilePath
+    $psi.Arguments = $Arguments -join " "
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+
+    try {
         $process = [System.Diagnostics.Process]::Start($psi)
         $process.WaitForExit()
-    } -ArgumentList $FilePath, $Arguments
-
-    while (-not $job.HasExited) {
-        Start-Sleep -Milliseconds 200
     }
-
-    Receive-Job $job | Out-Null
-    Remove-Job $job
-
-    $null = $waitingWindow.Dispatcher.Invoke([action]{
-        $progressBar = $waitingWindow.FindName("ProgressBar")
-        if ($progressBar) {
-            $progressBar.IsIndeterminate = $false
-            $progressBar.Visibility = 'Collapsed'
-        }
-        $waitingWindow.Hide()
-    })
+    finally {
+        # Close waiting window
+        $null = $waitingWindow.Dispatcher.Invoke([action]{ $waitingWindow.Close() })
+    }
 }
 
 $InstallBtn.Add_Click({
-    $selectedFiles = @($FilesListBox.SelectedItems)
-    if ($selectedFiles.Count -eq 0) {
-        [System.Windows.MessageBox]::Show("Please select at least one file to install.")
+    $selectedFile = $FilesListBox.SelectedItem
+    if (-not $selectedFile) {
+        [System.Windows.MessageBox]::Show("Please select a file to install.")
         return
     }
 
-    foreach ($selectedFile in $selectedFiles) {
-        $filePath = Join-Path $folder_downloads $selectedFile
-        $args = @()
-        $logFileName = "log_$selectedFile.txt"
-        $logPath = Join-Path $downloadFolder $logFileName
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $filePath = Join-Path $folder_downloads $selectedFile
+    $args = @()
+    $logFileName = "log_$selectedFile.txt"
+    $logPath = Join-Path $downloadFolder $logFileName
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-        try {
-            if ($selectedFile -match "Studio|Robot") {
-                $installType = Show-InstallTypeDialog
-                if (-not $installType) { continue }
+    try {
+        if ($selectedFile -match "Studio|Robot") {
+            $installType = Show-InstallTypeDialog
+            if (-not $installType) { return }
 
-                $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
-                if (-not (Test-Path $jsonPath)) {
-                    [System.Windows.MessageBox]::Show("Component list JSON not found.")
-                    continue
-                }
-
-                $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
-                $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
-                $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-                if ($selectedComponents.Count -eq 0) { continue }
-
-                $args = @(
-                    "/i", "`"$filePath`"",
-                    "ADDLOCAL=$($selectedComponents -join ",")",
-                    "$logSwitch `"$logPath`"",
-                    $quietSwitch
-                )
-                Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
-            }
-            elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
-                Execute-Installer -FilePath $filePath -Arguments $chromeInstallParams -LogFile $logPath
-            }
-            elseif ($selectedFile -like "*.msi") {
-                $args = @("/i", "`"$filePath`"", "$logSwitch `"$logPath`"", $quietSwitch)
-                Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
-            }
-            elseif ($selectedFile -like "*.exe") {
-                $args = @("/S", "/quiet", "/norestart")
-                Execute-Installer -FilePath $filePath -Arguments $args -LogFile $logPath
+            $jsonPath = Join-Path $PSScriptRoot "UiPathComponents.json"
+            if (-not (Test-Path $jsonPath)) {
+                [System.Windows.MessageBox]::Show("Component list JSON not found.")
+                return
             }
 
-            Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
+            $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+            $availableComponents = if ($installType -eq "Studio") { $json.studio } else { $json.robot }
+            $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+            if ($selectedComponents.Count -eq 0) { return }
+
+            $args = @(
+                "/i", "`"$filePath`"",
+                ($selectedComponents | ForEach-Object { "ADDLOCAL=$_" }) -join ",",
+                "$logSwitch `"$logPath`"",
+                $quietSwitch
+            )
+            Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
         }
-        catch {
-            Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
-            [System.Windows.MessageBox]::Show("Installation failed for '$selectedFile'. Check the log for details.")
+        elseif ($selectedFile -match "chrome" -and $selectedFile -like "*.exe") {
+            Execute-Installer -FilePath $filePath -Arguments $chromeInstallParams -LogFile $logPath
         }
+        elseif ($selectedFile -like "*.msi") {
+            $args = @("/i", "`"$filePath`"", "$logSwitch `"$logPath`"", $quietSwitch)
+            Execute-Installer -FilePath "msiexec.exe" -Arguments $args -LogFile $logPath
+        }
+        elseif ($selectedFile -like "*.exe") {
+            $args = @("/S", "/quiet", "/norestart")
+            Execute-Installer -FilePath $filePath -Arguments $args -LogFile $logPath
+        }
+
+        Add-Content -Path $masterLogPath -Value "$timestamp SUCCESS: Installed '$selectedFile' with args: $($args -join ' ')"
+
+        # Show completion message after install
+        [System.Windows.MessageBox]::Show("Installation of '$selectedFile' finished successfully.")
     }
-
-    [System.Windows.MessageBox]::Show("Installation completed for all selected files.")
+    catch {
+        Add-Content -Path $masterLogPath -Value "$timestamp ERROR: Failed to install '$selectedFile'. Error: $_"
+        [System.Windows.MessageBox]::Show("Installation failed. Check the log for details.")
+    }
 })
 
 $RefreshBtn.Add_Click({ Update-FileList })
