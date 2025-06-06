@@ -3,8 +3,9 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     [Security.Principal.WindowsBuiltInRole] "Administrator")) {
 
     $cmd = 'irm https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/main.ps1 | iex'
-    $arguments = "-NoExit -NoProfile -ExecutionPolicy Bypass -Command `$ErrorActionPreference = 'Stop'; $cmd"
+    $arguments = "-NoProfile -ExecutionPolicy Bypass -Command `$ErrorActionPreference = 'Stop'; $cmd"
     Start-Process powershell -ArgumentList $arguments -Verb RunAs
+    exit
 }
 
 Add-Type -AssemblyName PresentationFramework
