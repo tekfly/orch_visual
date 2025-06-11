@@ -151,12 +151,20 @@ $btnConnect.Add_Click({
         [System.Windows.MessageBox]::Show("ConnectWindow.ps1 not found.", "Error", "OK", "Error")
     }
     #[System.Windows.MessageBox]::Show("Connect clicked.") 
-    })
+})
 
 
 $btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
 
-$btnExtentions.Add_Click({ [System.Windows.MessageBox]::Show("Extentions clicked.") })
+$btnExtentions.Add_Click({
+        $script = Join-Path $global:scriptFolder "InstallExtensions.ps1"
+    if (Test-Path $script) {
+        & $script
+    } else {
+        [System.Windows.MessageBox]::Show("ConnectWindow.ps1 not found.", "Error", "OK", "Error")
+    }
+    [System.Windows.MessageBox]::Show("Extensions clicked.") 
+})
 
 # ---------- SHOW UI ----------
 $window.ShowDialog() | Out-Null
