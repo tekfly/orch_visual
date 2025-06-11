@@ -21,6 +21,7 @@ $extensionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/head
 $downloadWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/DownloadWindow.ps1"
 $installWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/InstallWindow.ps1"
 $connectWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/ConnectWindow.ps1"
+$installExtensionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/InstallExtensions.ps1"
 
 # XAML URLs
 $xamlFiles = @(
@@ -54,7 +55,8 @@ function Download-Files {
         @{ Url = $extensionsUrl; FileName = "extensions.json"; Folder = $jsonFolder },
         @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1"; Folder = $global:scriptFolder },
         @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:scriptFolder },
-        @{ Url = $connectWindowUrl; FileName = "ConnectWindow.ps1"; Folder = $global:scriptFolder }
+        @{ Url = $connectWindowUrl; FileName = "ConnectWindow.ps1"; Folder = $global:scriptFolder },
+        @{ Url = $installExtensionsUrl; FileName = "InstallExtensions.ps1"; Folder = $global:scriptFolder }
     )
 
     foreach ($file in $files) {
