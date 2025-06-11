@@ -123,7 +123,7 @@ function Execute-Installer {
     $process = [System.Diagnostics.Process]::Start($psi)
     $process.WaitForExit()
 }
-
+###############INSTALL BUTTON ###################
 $InstallBtn.Add_Click({
     $selectedFiles = $FilesListBox.SelectedItems
     if (-not $selectedFiles -or $selectedFiles.Count -eq 0) {
