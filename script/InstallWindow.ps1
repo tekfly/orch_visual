@@ -1,6 +1,7 @@
 # Define paths
 $downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
 $XamlPath = Join-Path $downloadFolder "xaml_files"
+$jsonPath = Join-Path $downloadFolder "json_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
