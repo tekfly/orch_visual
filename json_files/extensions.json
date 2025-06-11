@@ -12,29 +12,37 @@
   "commands": {
     "ChromeExtension": {
       "install": "&\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Chrome-Policy-Offline /silent",
-      "uninstall": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Chrome-Policy-Offline /uninstall /silent"
+      "uninstall": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Chrome-Policy-Offline /uninstall /silent",
+      "check": "Test-Path \"$env:LOCALAPPDATA\\UiPath\\app-*\\Extensions\\Chrome\""
     },
     "EdgeExtension": {
       "install": "&\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Edge-Policy-Offline",
-      "uninstall": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Edge-Chromium-Cleanup"
+      "uninstall": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Edge-Chromium-Cleanup",
+      "check": "Test-Path \"$env:LOCALAPPDATA\\UiPath\\app-*\\Extensions\\Edge\""
     },
     "FirefoxExtension": {
-      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Firefox-Policy-Offline"
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Firefox-Policy-Offline",
+      "check": "Test-Path \"$env:LOCALAPPDATA\\UiPath\\app-*\\Extensions\\Firefox\""
     },
     "JavaBridge": {
-      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Java"
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Java",
+      "check": "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Wow6432Node\\UiPath\\JavaBridge' -ErrorAction SilentlyContinue"
     },
     "SilverlightExtension": {
-      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Silverlight"
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Silverlight",
+      "check": "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Wow6432Node\\UiPath\\Silverlight' -ErrorAction SilentlyContinue"
     },
     "CitrixClient": {
-      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /CitrixClient"
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /CitrixClient",
+      "check": "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Wow6432Node\\Citrix\\ICA Client' -ErrorAction SilentlyContinue"
     },
     "WindowsRdpExtension": {
-      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /RdpClientGlobal"
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /RdpClientGlobal",
+      "check": "Test-Path 'C:\\Program Files\\UiPath\\Studio\\UiPath\\rdp.dll'"
     },
     "VMwareExtension": {
-      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /VMwareClientGlobal"
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /VMwareClientGlobal",
+      "check": "Test-Path 'C:\\Program Files\\UiPath\\Studio\\UiPath\\vmware.dll'"
     }
   },
   "defaults": {
