@@ -5,6 +5,7 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" >
             <Button Name="StudioBtn" Content="Studio" Width="100" Margin="5"/>
             <Button Name="RobotBtn" Content="Robot" Width="100" Margin="5"/>
+            <Button Name="CancelBtn" Content="Cancel" ToolTip="Skip this file and return to selection" />
         </StackPanel>
     </StackPanel>
 </Window>

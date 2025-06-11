@@ -70,8 +70,20 @@ $ChkPs1.Add_Unchecked({ Update-FileList })
 
 function Show-InstallTypeDialog {
     $choice = $null
-    $installTypeWindow.FindName("StudioBtn").Add_Click({ $choice = "Studio"; $installTypeWindow.Close() })
-    $installTypeWindow.FindName("RobotBtn").Add_Click({ $choice = "Robot"; $installTypeWindow.Close() })
+
+    $installTypeWindow.FindName("StudioBtn").Add_Click({
+        $choice = "Studio"
+        $installTypeWindow.Close()
+    })
+    $installTypeWindow.FindName("RobotBtn").Add_Click({
+        $choice = "Robot"
+        $installTypeWindow.Close()
+    })
+    $installTypeWindow.FindName("CancelBtn").Add_Click({
+        $choice = $null
+        $installTypeWindow.Close()
+    })
+
     $installTypeWindow.ShowDialog() | Out-Null
     return $choice
 }
@@ -125,7 +137,7 @@ function Execute-Installer {
     $process.WaitForExit()
 }
 
-###############INSTALL BUTTON ###################
+############### INSTALL BUTTON ###################
 $InstallBtn.Add_Click({
     $selectedFiles = $FilesListBox.SelectedItems
     if (-not $selectedFiles -or $selectedFiles.Count -eq 0) {
@@ -133,7 +145,6 @@ $InstallBtn.Add_Click({
         return
     }
 
-    # Files requiring install type and component selection (filtered by "studio" in filename)
     $filesRequiringSelection = @()
     foreach ($selectedFile in $selectedFiles) {
         if ($selectedFile -imatch "studio") {
@@ -141,44 +152,34 @@ $InstallBtn.Add_Click({
         }
     }
 
-    # Load JSON once outside the loop
     $jsonPath = Join-Path $jsonfilePath "InstallComponents.json"
     if (-not (Test-Path $jsonPath)) {
         [System.Windows.MessageBox]::Show("Component list JSON not found.")
         return
     }
-    $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
 
-    # Dictionary to hold selections per file
+    $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
     $installSelections = @{}
 
-    # Ask for install type and components for each file needing it
     foreach ($file in $filesRequiringSelection) {
         $installType = Show-InstallTypeDialog
         if (-not $installType) {
-            # User cancelled selection, skip this file
-            continue
+            continue  # User cancelled
         }
 
-        # Get available components dynamically from .components based on install type
         $availableComponents = $json.components.$installType
-
-        # Show component selection dialog
         $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
 
-        # If no components selected, fallback to defaults for that install type
         if ($selectedComponents.Count -eq 0) {
             $selectedComponents = $json.defaults.$installType
         }
 
-        # Save selection for later
         $installSelections[$file] = @{
             InstallType = $installType
             Components = $selectedComponents
         }
     }
 
-    # Initialize progress bar and show waiting window
     $progressBar.Minimum = 0
     $progressBar.Maximum = $selectedFiles.Count
     $progressBar.Value = 0
@@ -187,7 +188,6 @@ $InstallBtn.Add_Click({
     $waitingWindow.Show()
     Start-Sleep -Milliseconds 200
 
-    # Installation loop
     foreach ($selectedFile in $selectedFiles) {
         $filePath = Join-Path $folder_downloads $selectedFile
         $args = @()
@@ -240,4 +240,3 @@ $CancelBtn.Add_Click({ $mainWindow.Close() })
 
 Update-FileList
 $mainWindow.ShowDialog() | Out-Null
-#update 4:12
