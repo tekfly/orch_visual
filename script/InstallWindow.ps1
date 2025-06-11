@@ -1,7 +1,7 @@
 # Define paths
 $downloadFolder = Join-Path $env:USERPROFILE "Downloads\UiPath_temp"
 $XamlPath = Join-Path $downloadFolder "xaml_files"
-$jsonPath = Join-Path $downloadFolder "json_files"
+$jsonfilePath = Join-Path $downloadFolder "json_files"
 $InstallWindowXamlPath = Join-Path $XamlPath "InstallWindow.xaml"
 $InstallTypeXamlPath = Join-Path $XamlPath "InstallTypeDialog.xaml"
 $ComponentOptionsXamlPath = Join-Path $XamlPath "ComponentOptions.xaml"
@@ -142,7 +142,7 @@ $InstallBtn.Add_Click({
     }
 
     # Load JSON once outside the loop
-    $jsonPath = Join-Path $jsonPath "InstallComponents.json"
+    $jsonPath = Join-Path $jsonfilePath "InstallComponents.json"
     if (-not (Test-Path $jsonPath)) {
         [System.Windows.MessageBox]::Show("Component list JSON not found.")
         return
