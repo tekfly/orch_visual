@@ -24,7 +24,7 @@
         <!-- Dynamic Component List -->
         <GroupBox Header="Extensions" Grid.Row="1" Margin="0,0,0,10">
             <ScrollViewer VerticalScrollBarVisibility="Auto" Height="300">
-                <StackPanel x:Name="ExtensionsPanel" Margin="10,5"/>
+                <StackPanel Name="ExtensionsPanel" Margin="10,5"/>
             </ScrollViewer>
         </GroupBox>
 
