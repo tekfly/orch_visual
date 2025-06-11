@@ -21,10 +21,11 @@ if (!(Test-Path $XamlPath)) {
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
-# Map UI elements
+# Map UI elements by 'Name' attribute (no namespace prefix)
 $controls = @{}
-$xaml.SelectNodes("//*[@x:Name]") | ForEach-Object {
-    $controls[$_.GetAttribute("x:Name")] = $window.FindName($_.GetAttribute("x:Name"))
+$xaml.SelectNodes("//*[@Name]") | ForEach-Object {
+    $name = $_.GetAttribute("Name")
+    $controls[$name] = $window.FindName($name)
 }
 
 # Get the dynamic checkbox panel
