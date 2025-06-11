@@ -1,0 +1,48 @@
+{
+  "components": [
+    "ChromeExtension",
+    "EdgeExtension",
+    "FirefoxExtension",
+    "JavaBridge",
+    "SilverlightExtension",
+    "CitrixClient",
+    "WindowsRdpExtension",
+    "VMwareExtension"
+  ],
+  "commands": {
+    "ChromeExtension": {
+      "install": "&\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Chrome-Policy-Offline /silent",
+      "uninstall": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Chrome-Policy-Offline /uninstall /silent"
+    },
+    "EdgeExtension": {
+      "install": "&\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Edge-Policy-Offline",
+      "uninstall": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Edge-Chromium-Cleanup"
+    },
+    "FirefoxExtension": {
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Firefox-Policy-Offline"
+    },
+    "JavaBridge": {
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Java"
+    },
+    "SilverlightExtension": {
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /Silverlight"
+    },
+    "CitrixClient": {
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /CitrixClient"
+    },
+    "WindowsRdpExtension": {
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /RdpClientGlobal"
+    },
+    "VMwareExtension": {
+      "install": "\"C:\\Program Files\\UiPath\\Studio\\UiPath\\SetupExtensions.exe\" /VMwareClientGlobal"
+    }
+  },
+  "defaults": {
+    "Studio": [
+      "ChromeExtension",
+      "EdgeExtension",
+      "FirefoxExtension"
+    ],
+    "Robot": []
+  }
+}

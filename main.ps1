@@ -17,6 +17,7 @@ $global:scriptFolder = Join-Path $global:downloadFolder "script"
 # URLs
 $productVersionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/product_versions.json"
 $installComponentsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/InstallComponents.json"
+$extensionsUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/json_files/extensions.json"
 $downloadWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/DownloadWindow.ps1"
 $installWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/InstallWindow.ps1"
 $connectWindowUrl = "https://raw.githubusercontent.com/tekfly/orch_visual/refs/heads/main/script/ConnectWindow.ps1"
@@ -49,6 +50,7 @@ function Download-Files {
     $files = @(
         @{ Url = $productVersionsUrl; FileName = "product_versions.json"; Folder = $jsonFolder },
         @{ Url = $installComponentsUrl; FileName = "InstallComponents.json"; Folder = $jsonFolder },
+        @{ Url = $extensionsUrl; FileName = "extensions.json"; Folder = $jsonFolder },
         @{ Url = $downloadWindowUrl; FileName = "DownloadWindow.ps1"; Folder = $global:scriptFolder },
         @{ Url = $installWindowUrl; FileName = "InstallWindow.ps1"; Folder = $global:scriptFolder },
         @{ Url = $connectWindowUrl; FileName = "ConnectWindow.ps1"; Folder = $global:scriptFolder }
@@ -102,7 +104,7 @@ $btnDownload  = $window.FindName("BtnDownload")
 $btnInstall   = $window.FindName("BtnInstall")
 $btnConnect   = $window.FindName("BtnConnect")
 $btnUpdate    = $window.FindName("BtnUpdate")
-$BtnExtentions    = $window.FindName("BtnExtentions")
+$btnExtentions    = $window.FindName("BtnExtentions")
 
 
 # Initialize UI
@@ -112,7 +114,7 @@ $btnDownload.IsEnabled = $true
 $btnInstall.IsEnabled = $true
 $btnConnect.IsEnabled = $true
 $btnUpdate.IsEnabled = $true
-$BtnExtentions.IsEnabled = $true
+$btnExtentions.IsEnabled = $true
 
 # ---------- BUTTON EVENTS ----------
 $btnFiles.Add_Click({
@@ -154,7 +156,7 @@ $btnConnect.Add_Click({
 
 $btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
 
-$BtnExtentions.Add_Click({ [System.Windows.MessageBox]::Show("Extentions clicked.") })
+$btnExtentions.Add_Click({ [System.Windows.MessageBox]::Show("Extentions clicked.") })
 
 # ---------- SHOW UI ----------
 $window.ShowDialog() | Out-Null
