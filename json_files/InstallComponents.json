@@ -1,5 +1,6 @@
 {
-  "components": [
+  "components": {
+    "Studio":[
     "JavaBridge",
     "ChromeExtension",
     "FirefoxExtension",
@@ -15,6 +16,21 @@
     "DesktopFeature",
     "Packages"
   ],
+  "Robot": [
+    "JavaBridge",
+    "ChromeExtension",
+    "FirefoxExtension",
+    "Robot",
+    "EdgeExtension",
+    "CitrixClient",
+    "JavaScriptAddOn",
+    "SapPlugin",
+    "VMwareExtension",
+    "WindowsRdpExtension",
+    "RegisterService",
+    "Packages"
+  ]
+  },
   "defaults": {
     "Studio": [
       "DesktopFeature",
@@ -26,7 +42,8 @@
     ],
     "Robot": [
       "Robot",
-      "RegisterService"
+      "RegisterService",
+      "ChromeExtension"
     ]
   }
 }
