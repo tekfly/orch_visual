@@ -166,7 +166,7 @@ $btnExtentions.Add_Click({
     } else {
         [System.Windows.MessageBox]::Show("InstallExtensions.ps1 not found.", "Error", "OK", "Error")
     }
-    [System.Windows.MessageBox]::Show("Extensions clicked.") 
+    #[System.Windows.MessageBox]::Show("Extensions clicked.") 
 })
 
 # ---------- SHOW UI ----------
