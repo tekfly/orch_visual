@@ -1,3 +1,4 @@
+#InstallExtensions.ps1
 Add-Type -AssemblyName PresentationFramework
 
 # Define paths
@@ -25,7 +26,9 @@ $window = [Windows.Markup.XamlReader]::Load($reader)
 $controls = @{}
 $xaml.SelectNodes("//*[@Name]") | ForEach-Object {
     $name = $_.GetAttribute("Name")
-    $controls[$name] = $window.FindName($name)
+    if ($name) {
+        $controls[$name] = $window.FindName($name)
+    }
 }
 
 # Get the dynamic checkbox panel
