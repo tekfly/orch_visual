@@ -161,7 +161,7 @@ $btnExtentions.Add_Click({
     if (Test-Path $script) {
         & $script
     } else {
-        [System.Windows.MessageBox]::Show("ConnectWindow.ps1 not found.", "Error", "OK", "Error")
+        [System.Windows.MessageBox]::Show("InstallExtensions.ps1 not found.", "Error", "OK", "Error")
     }
     [System.Windows.MessageBox]::Show("Extensions clicked.") 
 })
