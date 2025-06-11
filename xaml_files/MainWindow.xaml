@@ -11,6 +11,7 @@
                 <Button Name="BtnInstall" Width="80" Margin="5" Content="Install" IsEnabled="True"/>
                 <Button Name="BtnConnect" Width="80" Margin="5" Content="Connect" IsEnabled="True"/>
                 <Button Name="BtnUpdate" Width="80" Margin="5" Content="Update" IsEnabled="True"/>
+                <Button Name="BtnExtentions" Width="80" Margin="5" Content="Extentions" IsEnabled="True"/>
             </WrapPanel>
         </StackPanel>
     </Grid>

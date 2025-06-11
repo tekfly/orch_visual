@@ -102,6 +102,8 @@ $btnDownload  = $window.FindName("BtnDownload")
 $btnInstall   = $window.FindName("BtnInstall")
 $btnConnect   = $window.FindName("BtnConnect")
 $btnUpdate    = $window.FindName("BtnUpdate")
+$BtnExtentions    = $window.FindName("BtnExtentions")
+
 
 # Initialize UI
 $statusText.Text = "Ready."
@@ -110,6 +112,7 @@ $btnDownload.IsEnabled = $true
 $btnInstall.IsEnabled = $true
 $btnConnect.IsEnabled = $true
 $btnUpdate.IsEnabled = $true
+$BtnExtentions.IsEnabled = $true
 
 # ---------- BUTTON EVENTS ----------
 $btnFiles.Add_Click({
@@ -150,6 +153,8 @@ $btnConnect.Add_Click({
 
 
 $btnUpdate.Add_Click({ [System.Windows.MessageBox]::Show("Update clicked.") })
+
+$BtnExtentions.Add_Click({ [System.Windows.MessageBox]::Show("Extentions clicked.") })
 
 # ---------- SHOW UI ----------
 $window.ShowDialog() | Out-Null

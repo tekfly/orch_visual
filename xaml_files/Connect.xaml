@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp2"
         mc:Ignorable="d"
-        Title="Connect" Height="450" Width="800">
+        Title="Connect" Height="450" Width="800"
+        WindowStartupLocation="CenterScreen">
     <Grid>
         <Rectangle HorizontalAlignment="Left" Height="149" Margin="68,96,0,0" Stroke="Black" VerticalAlignment="Top" Width="660"/>
         <Label x:Name="lblOrch_URL" Content="Orchestrator URL" HorizontalAlignment="Left" Margin="77,106,0,0" VerticalAlignment="Top"/>
