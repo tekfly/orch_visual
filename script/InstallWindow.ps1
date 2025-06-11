@@ -142,7 +142,7 @@ $InstallBtn.Add_Click({
     }
 
     # Load JSON once outside the loop
-    $jsonPath = Join-Path $PSScriptRoot "InstallComponents.json"
+    $jsonPath = Join-Path $jsonPath "InstallComponents.json"
     if (-not (Test-Path $jsonPath)) {
         [System.Windows.MessageBox]::Show("Component list JSON not found.")
         return
