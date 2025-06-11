@@ -161,25 +161,25 @@ $InstallBtn.Add_Click({
     $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
     $installSelections = @{}
 
-    foreach ($file in $filesRequiringSelection) {
-        $installType = Show-InstallTypeDialog
-        if (-not $installType) {
-            continue  # User cancelled
-        }
-
-        $availableComponents = $json.components.$installType
-        $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-
-        if ($selectedComponents.Count -eq 0) {
-            $selectedComponents = $json.defaults.$installType
-        }
-
-        $installSelections[$file] = @{
-            InstallType = $installType
-            Components = $selectedComponents
-        }
+foreach ($file in $filesRequiringSelection) {
+    $installType = Show-InstallTypeDialog
+    if (-not $installType) {
+        [System.Windows.MessageBox]::Show("Installation cancelled by user.")
+        return  # Stop the entire installation
     }
 
+    $availableComponents = $json.components.$installType
+    $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+
+    if ($selectedComponents.Count -eq 0) {
+        $selectedComponents = $json.defaults.$installType
+    }
+
+    $installSelections[$file] = @{
+        InstallType = $installType
+        Components = $selectedComponents
+    }
+}
     $progressBar.Minimum = 0
     $progressBar.Maximum = $selectedFiles.Count
     $progressBar.Value = 0
