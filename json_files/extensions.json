@@ -47,10 +47,17 @@
   },
   "defaults": {
     "Studio": [
+      "DesktopFeature",
       "ChromeExtension",
       "EdgeExtension",
       "FirefoxExtension"
     ],
-    "Robot": []
+    "Robot": [
+      "DesktopFeature",
+      "Robot",
+      "RegisterService",
+      "Packages",
+      "ChromeExtension"
+    ]
   }
 }
