@@ -69,23 +69,27 @@ $ChkExe.Add_Unchecked({ Update-FileList })
 $ChkPs1.Add_Unchecked({ Update-FileList })
 
 function Show-InstallTypeDialog {
-    $choice = $null
+    $choiceRef = [ref] ""
 
     $installTypeWindow.FindName("StudioBtn").Add_Click({
-        $choice = "Studio"
+        $choiceRef.Value = "Studio"
         $installTypeWindow.Close()
     })
     $installTypeWindow.FindName("RobotBtn").Add_Click({
-        $choice = "Robot"
+        $choiceRef.Value = "Robot"
         $installTypeWindow.Close()
     })
     $installTypeWindow.FindName("CancelBtn").Add_Click({
-        $choice = $null
+        $choiceRef.Value = ""
         $installTypeWindow.Close()
     })
 
     $installTypeWindow.ShowDialog() | Out-Null
-    return $choice
+
+    if ($choiceRef.Value -eq "") {
+        return $null
+    }
+    return $choiceRef.Value
 }
 
 function Show-ComponentOptionsDialog {
@@ -161,25 +165,26 @@ $InstallBtn.Add_Click({
     $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
     $installSelections = @{}
 
-foreach ($file in $filesRequiringSelection) {
-    $installType = Show-InstallTypeDialog
-    if (-not $installType) {
-        [System.Windows.MessageBox]::Show("Installation cancelled by user.")
-        return  # Stop the entire installation
+    foreach ($file in $filesRequiringSelection) {
+        $installType = Show-InstallTypeDialog
+        if (-not $installType) {
+            [System.Windows.MessageBox]::Show("Installation cancelled by user.")
+            return
+        }
+
+        $availableComponents = $json.components.$installType
+        $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
+
+        if ($selectedComponents.Count -eq 0) {
+            $selectedComponents = $json.defaults.$installType
+        }
+
+        $installSelections[$file] = @{
+            InstallType = $installType
+            Components = $selectedComponents
+        }
     }
 
-    $availableComponents = $json.components.$installType
-    $selectedComponents = Show-ComponentOptionsDialog -Options $availableComponents
-
-    if ($selectedComponents.Count -eq 0) {
-        $selectedComponents = $json.defaults.$installType
-    }
-
-    $installSelections[$file] = @{
-        InstallType = $installType
-        Components = $selectedComponents
-    }
-}
     $progressBar.Minimum = 0
     $progressBar.Maximum = $selectedFiles.Count
     $progressBar.Value = 0
